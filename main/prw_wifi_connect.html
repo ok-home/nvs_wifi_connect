@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+    <title>WiFi connect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <style>
+        .column {
+            float: left;
+            width: 100%;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+        .btn {
+            float: left;
+            width: 100%;
+            margin: 2px;
+
+        }
+        .cl1 {
+            float: left;
+            width: 100%;
+            margin: 2px;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .cl01 {
+            float: left;
+            width: 100%;
+            text-align: center;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .cl02 {
+            float: left;
+            width: 100%;
+            text-align: center;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+
+        .hdr {
+            float: left;
+            width: 100%;
+            text-align: center;
+            color: white;
+            background-color: blue;
+            padding: 5px;
+            margin: 5px;
+        }
+
+        .logstr {
+            width: 100%;
+            float: left;
+        }
+
+
+    </style>
+
+</head>
+
+<body>
+        <div class="hdr">Подключение WiFi</div>
+        <div class="cl1">
+            <label class="cl01" for="WiFi_SSID">Имя сети</label>
+            <input class="cl02" type="text" id="WiFi_SSID" name="wifi_ssid" placeholder="SSID..">
+        </div>
+        <div class="cl1">
+            <label class="cl01" for="WiFi_Pass">Пароль</label>
+            <input class="cl02" type="text" id="WiFi_Pass" name="wifi_pass" placeholder="Pass..">
+        </div>
+        <div class="cl1">
+            <label class="cl01" for="WiFi_STA_AP">Режим при загрузке</label>
+            <select class="cl02" id="WiFi_STA_AP" name="wifi_sta_ap">
+                <option value="wifi_sta">Подключение к сети</option>
+                <option value="wifi_ap">Точка доступа Wifi_AP 192.168.4.1</option>
+            </select>
+        </div>
+        <div class="column">
+            <button class="btn" id="Wifi_Upload">Записать данные WiFi </button>
+            <button class="btn" id="Wifi_Restart">Рестарт</button>
+        </div>
+        <script>
+        </script>
+
+        <script>/*WIFI обновление*/
+            function check_Wifi_SSID_Pass() {
+                var ssid = document.getElementById("WiFi_SSID");
+                if (ssid.value.length == 0) {
+                    ssid.placeholder = "не может быть пустым";
+                    ssid.focus();
+                    return false;
+                }
+                var pass = document.getElementById("WiFi_Pass");
+                if (pass.value.length < 8) {
+                    pass.value = "";
+                    pass.placeholder = "Пароль должен быть больше 8 символов";
+                    pass.focus();
+                    return false;
+                }
+                return true;
+            }
+            document.getElementById("WiFi_SSID").addEventListener("change", function (e) {
+                if (e.target.value.length == 0) {
+                    e.target.placeholder = "не может быть пустым";
+                    e.target.focus();
+                }
+            });
+            document.getElementById("WiFi_Pass").addEventListener("change", function (e) {
+                if (e.target.value.length < 8) {
+                    e.target.value = '';
+                    e.target.placeholder = "Пароль должен быть больше 8 символов";
+                    e.target.focus();
+                }
+            });
+            document.getElementById("Wifi_Restart").addEventListener("click", function (e) {
+                var ssid = document.getElementById("WiFi_SSID");
+                var pass = document.getElementById("WiFi_Pass");
+                var sta_ap = document.getElementById("WiFi_STA_AP");
+                if (check_Wifi_SSID_Pass()) {
+                    socket.send(JSON.stringify({ name: ssid.name, msg: ssid.value }));
+                    socket.send(JSON.stringify({ name: pass.name, msg: pass.value }));
+                    socket.send(JSON.stringify({ name: sta_ap.name, msg: sta_ap.value }));
+                    socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "restart" }));
+                }
+            });
+            document.getElementById("Wifi_Upload").addEventListener("click", function (e) {
+                var ssid = document.getElementById("WiFi_SSID");
+                var pass = document.getElementById("WiFi_Pass");
+                var sta_ap = document.getElementById("WiFi_STA_AP");
+                if (check_Wifi_SSID_Pass()) {
+                    socket.send(JSON.stringify({ name: ssid.name, msg: ssid.value }));
+                    socket.send(JSON.stringify({ name: pass.name, msg: pass.value }));
+                    socket.send(JSON.stringify({ name: sta_ap.name, msg: sta_ap.value }));
+                    socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "writeonly" }));
+                }
+            });
+        </script>
+
+    <div id="LogString" class="logstr"></div>
+    <script>  // Прием, обработка и отправка данных в WS
+   </script>
+
+    <script> // основной старт скрипта, открыть сокет
+        // Echo str ( json )
+        var logstr = document.getElementById("LogString");
+        // создать сокет по адресу
+        var wsHostStr = "ws://" + document.location.host + "/ws";
+        var socket = new WebSocket(wsHostStr);
+        // переключиться на 1 закладку на странице
+        //document.getElementById("defaultOpenTab").click();
+    </script>
+
+    <script> // события WS
+        socket.onopen = function () {
+        };
+        socket.onclose = function (event) {
+        };
+        socket.onerror = function () { 
+        };
+        socket.onmessage = function (event) {
+        };
+    </script>
+
+</body>
+
+</html>
