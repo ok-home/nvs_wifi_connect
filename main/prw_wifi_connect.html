@@ -132,7 +132,7 @@
                 var ssid = document.getElementById("WiFi_SSID");
                 var pass = document.getElementById("WiFi_Pass");
                 var sta_ap = document.getElementById("WiFi_STA_AP");
-                if (check_Wifi_SSID_Pass()) {
+                 if (check_Wifi_SSID_Pass()) {
                     socket.send(JSON.stringify({ name: ssid.name, msg: ssid.value }));
                     socket.send(JSON.stringify({ name: pass.name, msg: pass.value }));
                     socket.send(JSON.stringify({ name: sta_ap.name, msg: sta_ap.value }));
@@ -151,8 +151,7 @@
         // создать сокет по адресу
         var wsHostStr = "ws://" + document.location.host + "/ws";
         var socket = new WebSocket(wsHostStr);
-        // переключиться на 1 закладку на странице
-        //document.getElementById("defaultOpenTab").click();
+
     </script>
 
     <script> // события WS
