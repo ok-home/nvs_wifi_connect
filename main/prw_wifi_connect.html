@@ -65,14 +65,18 @@
 
 <body>
         <div class="hdr">Подключение WiFi</div>
+    <div id="sta">
         <div class="cl1">
             <label class="cl01" for="WiFi_SSID">Имя сети</label>
             <input class="cl02" type="text" id="WiFi_SSID" name="wifi_ssid" placeholder="SSID..">
         </div>
+    
         <div class="cl1">
             <label class="cl01" for="WiFi_Pass">Пароль</label>
             <input class="cl02" type="text" id="WiFi_Pass" name="wifi_pass" placeholder="Pass..">
         </div>
+    </div>
+
         <div class="cl1">
             <label class="cl01" for="WiFi_STA_AP">Режим при загрузке</label>
             <select class="cl02" id="WiFi_STA_AP" name="wifi_sta_ap">
@@ -104,6 +108,14 @@
                 }
                 return true;
             }
+            document.getElementById("WiFi_STA_AP").addEventListener("change", function (e) {
+                if (e.target.value == "wifi_sta" ) {
+                    document.getElementById("sta").style.display="block";
+                }else{
+                        document.getElementById("sta").style.display="none";   
+                    }
+            });
+
             document.getElementById("WiFi_SSID").addEventListener("change", function (e) {
                 if (e.target.value.length == 0) {
                     e.target.placeholder = "не может быть пустым";
