@@ -19,7 +19,8 @@
 #define NVS_STA_LONG_RETRY_TIME_KEY     "nvsStaLtime"
 #define NVS_STA_LONG_RETRY_NUM_KEY      "nvsStaLnum"
 #define NVS_STA_AP_DEFAULT_MODE_KEY     "nvsApStaMode"
-
+#define NVS_WIFI_MODE_STA               "modeSta"
+#define NVS_WIFI_MODE_AP                "modeAp"
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -72,7 +73,7 @@ static void wifi_event_handler_ap(void* arg, esp_event_base_t event_base,
     }
 }
 
-void wifi_init_softap(void)
+void wifi_init_softap(char *ap_ssid, char *ap_pass)
 {
     //ESP_ERROR_CHECK(esp_netif_init());
     //ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -89,14 +90,15 @@ void wifi_init_softap(void)
 
     wifi_config_t wifi_config = {
         .ap = {
-            .ssid = AP_ESP_WIFI_SSID,
-            .ssid_len = strlen(AP_ESP_WIFI_SSID),
-            .password = AP_ESP_WIFI_PASS,
+            .ssid_len = 0,
             .max_connection = AP_MAX_STA_CONN,
             .authmode = WIFI_AUTH_WPA_WPA2_PSK
         },
     };
-    if (strlen(AP_ESP_WIFI_PASS) == 0) {
+    strncpy((char *)wifi_config.ap.ssid,ap_ssid,sizeof(wifi_config.ap.ssid));
+    strcnpy((char *)wifi_config.ap.password,ap_pass,sizeof(wifi_config.ap.password));
+
+    if (strlen(wifi_config.ap.password) == 0) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
     }
 
@@ -108,7 +110,7 @@ void wifi_init_softap(void)
              AP_ESP_WIFI_SSID, AP_ESP_WIFI_PASS);
 }
 
-esp_err_t wifi_init_sta(void)
+esp_err_t wifi_init_sta(char *sta_ssid, char *sta_pass )
 {
     esp_err_t err = ESP_OK;
     s_wifi_event_group = xEventGroupCreate();
@@ -136,21 +138,15 @@ esp_err_t wifi_init_sta(void)
 
     wifi_config_t wifi_config = {
         .sta = {
-            //.ssid =(uint8_t *)wifiDataParm[WIFI_TAB_SSID].val,
-            //.password = (uint8_t *)wifiDataParm[WIFI_TAB_PASS].val,
-            /* Setting a password implies station will connect to all security modes including WEP/WPA.
-             * However these modes are deprecated and not advisable to be used. Incase your Access point
-             * doesn't support WPA2, these mode can be enabled by commenting below line */
 	     .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-
             .pmf_cfg = {
                 .capable = true,
                 .required = false
             },
         },
     };
-    strcpy((char *)wifi_config.sta.ssid,wifiDataParm[WIFI_TAB_SSID].val);
-    strcpy((char *)wifi_config.sta.password,wifiDataParm[WIFI_TAB_PASS].val);
+    strncpy((char *)wifi_config.sta.ssid,sta_ssid,sizeof(wifi_config.sta.ssid));
+    strcnpy((char *)wifi_config.sta.password,sta_pass,sizeof(wifi_config.sta.password));
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
@@ -199,5 +195,58 @@ esp_err_t wifi_init_sta(void)
 
 esp_err_t prv_wifi_connect(void)
 {
+    int nvs_init = 0;
+    nvs_handle_t my_handle;
+    size_t required_size;
+    char  nvs_mode[32]={0};
+    char  nvs_ssid[32]={0};
+    char  nvs_password[64]={0};
+
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        nvs_init = 1;
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(err);
+
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    if(nvs_init || nvs_open("storage", NVS_READWRITE, &my_handle) || nvs_get_str(my_handle, "nvsApStaMode", nvs_mode, &required_size) ) // nvs erase -> no valid data for connect -> default AP mode
+    {
+        ESP_LOGE(TAG,"NVS INIT ERR init=%d,handle=%d,mode=%s",nvs_init,my_handle,nvs_mode);
+        err = ESP_FAIL;
+    }
+    else 
+    {
+        if(strncmp(NVS_WIFI_MODE_STA,nvs_mode,strlen(NVS_WIFI_MODE_STA)) == 0) // sta
+        {
+            if((nvs_get_str(my_handle, "nvsStaSsid", nvs_ssid, &required_size) || nvs_get_str(my_handle, "nvsStaPass", nvs_password, &required_size)) == ESP_OK)
+            {
+            err = wifi_init_sta(nvs_ssid,nvs_password); // ssid & pass OK
+            if(err) {ESP_LOGE(TAG,"STA ERR ssid=%s pass=%s",nvs_ssid,nvs_password);}
+            }
+        }
+        else // ap
+        {
+            err = nvs_get_str(my_handle, "nvsApSsid", nvs_ssid, &required_size) || nvs_get_str(my_handle, "nvsApPass", nvs_password, &required_size);
+            if( err == ESP_OK)
+            {
+                wifi_init_softap(nvs_ssid,nvs_password); // ssid & pass OK
+            }
+            else {ESP_LOGE(TAG,"AP ERR ssid=%s pass=%s",nvs_ssid,nvs_password);}
+        }
+    }
+    if ( err )
+    {
+        wifi_init_softap("DefaultAP","");
+        ESP_LOGE(TAG,"ERR start default AP");
+    }
+
+    nvs_close(my_handle);
+    // start default prv server
 
 }
+
