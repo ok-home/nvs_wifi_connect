@@ -1,26 +1,6 @@
-#include "esp_wifi.h"
-#include "esp_event.h"
+#include "prv_wifi_connect.h"
+#include "prv_wifi_connect_private.h"
 
-
-#define AP_ESP_WIFI_SSID      "Provision_Wifi_AP"
-#define AP_ESP_WIFI_PASS      ""
-#define AP_MAX_STA_CONN       4
-
-//#define STA_ESP_WIFI_SSID      "ok-home-Keenetic"
-//#define STA_ESP_WIFI_PASS      "RicohPriport"
-#define STA_ESP_MAXIMUM_RETRY  5
-#define STA_ESP_MAXIMUM_LONG_RETRY  5
-
-#define NVS_AP_ESP_WIFI_SSID_KEY        "nvsApSsid"
-#define NVS_AP_ESP_WIFI_PASS_KEY        "nvsApPass"
-#define NVS_STA_ESP_WIFI_SSID_KEY       "nvsStaSsid"
-#define NVS_STA_ESP_WIFI_PASS_KEY       "nvsStaPass"
-#define NVS_STA_SHORT_RETRY_NUM_KEY     "nvsStaSnum"
-#define NVS_STA_LONG_RETRY_TIME_KEY     "nvsStaLtime"
-#define NVS_STA_LONG_RETRY_NUM_KEY      "nvsStaLnum"
-#define NVS_STA_AP_DEFAULT_MODE_KEY     "nvsApStaMode"
-#define NVS_WIFI_MODE_STA               "modeSta"
-#define NVS_WIFI_MODE_AP                "modeAp"
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -30,7 +10,7 @@ static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
 
-static const char *TAG = "wifi connect";
+static const char *TAG = "prv_wifi_connect";
 
 static int short_retry_num = 0;
 static int long_retry_num = 0;
@@ -192,7 +172,6 @@ esp_err_t wifi_init_sta(char *sta_ssid, char *sta_pass )
 *
 */
 
-
 esp_err_t prv_wifi_connect(void)
 {
     int nvs_init = 0;
@@ -214,7 +193,7 @@ esp_err_t prv_wifi_connect(void)
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    if(nvs_init || nvs_open("storage", NVS_READWRITE, &my_handle) || nvs_get_str(my_handle, "nvsApStaMode", nvs_mode, &required_size) ) // nvs erase -> no valid data for connect -> default AP mode
+    if(nvs_init || nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &my_handle) || nvs_get_str(my_handle, NVS_STA_AP_DEFAULT_MODE_KEY, nvs_mode, &required_size) ) // nvs erase -> no valid data for connect -> default AP mode
     {
         ESP_LOGE(TAG,"NVS INIT ERR init=%d,handle=%d,mode=%s",nvs_init,my_handle,nvs_mode);
         err = ESP_FAIL;
@@ -223,7 +202,7 @@ esp_err_t prv_wifi_connect(void)
     {
         if(strncmp(NVS_WIFI_MODE_STA,nvs_mode,strlen(NVS_WIFI_MODE_STA)) == 0) // sta
         {
-            if((nvs_get_str(my_handle, "nvsStaSsid", nvs_ssid, &required_size) || nvs_get_str(my_handle, "nvsStaPass", nvs_password, &required_size)) == ESP_OK)
+            if((nvs_get_str(my_handle, NVS_STA_ESP_WIFI_SSID_KEY, nvs_ssid, &required_size) || nvs_get_str(my_handle, NVS_STA_ESP_WIFI_PASS_KEY, nvs_password, &required_size)) == ESP_OK)
             {
             err = wifi_init_sta(nvs_ssid,nvs_password); // ssid & pass OK
             if(err) {ESP_LOGE(TAG,"STA ERR ssid=%s pass=%s",nvs_ssid,nvs_password);}
@@ -231,7 +210,7 @@ esp_err_t prv_wifi_connect(void)
         }
         else // ap
         {
-            err = nvs_get_str(my_handle, "nvsApSsid", nvs_ssid, &required_size) || nvs_get_str(my_handle, "nvsApPass", nvs_password, &required_size);
+            err = nvs_get_str(my_handle, NVS_AP_ESP_WIFI_SSID_KEY , nvs_ssid, &required_size) || nvs_get_str(my_handle, NVS_AP_ESP_WIFI_PASS_KEY , nvs_password, &required_size);
             if( err == ESP_OK)
             {
                 wifi_init_softap(nvs_ssid,nvs_password); // ssid & pass OK
@@ -241,12 +220,13 @@ esp_err_t prv_wifi_connect(void)
     }
     if ( err )
     {
-        wifi_init_softap("DefaultAP","");
+        wifi_init_softap(DEFAULT_AP_ESP_WIFI_SSID,DEFAULT_AP_ESP_WIFI_PASS);
         ESP_LOGE(TAG,"ERR start default AP");
     }
 
     nvs_close(my_handle);
     // start default prv server
+    prv_http_server();
 
 }
 

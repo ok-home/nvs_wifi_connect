@@ -22,6 +22,9 @@
  */
 static const char *TAG = "ws_echo_server";
 
+//#define NOHTTPSRV
+#ifdef NOHTTPSRV
+
 /*
  * Structure holding server handle
  * and internal socket fd in order
@@ -222,3 +225,11 @@ void app_main(void)
     /* Start the server for the first time */
     server = start_webserver();
 }
+
+#endif
+#include "prv_wifi_connect.h"
+void app_main(void)
+{
+prv_wifi_connect();
+}
+

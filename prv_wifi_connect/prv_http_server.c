@@ -1,22 +1,5 @@
-/* WebSocket Echo Server Example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-
-#include <esp_wifi.h>
-#include <esp_event.h>
-#include <esp_log.h>
-#include <esp_system.h>
-#include <nvs_flash.h>
-#include <sys/param.h>
-#include "esp_netif.h"
-#include "protocol_examples_common.h"
-
-#include <esp_http_server.h>
+#include "prv_wifi_connect.h"
+#include "prv_wifi_connect_private.h"
 
 /* A simple example that demonstrates using websocket echo server
  */
@@ -72,12 +55,15 @@ void set_nvs_data(char *jsonstr)
 {
     char key[16];
     char value[64];
+    nvs_handle_t my_handle;
+    nvs_open("storage", NVS_READWRITE, &my_handle);
     ESP_LOGI(TAG,"jsonstr=%s",jsonstr);
     int res = sscanf(jsonstr,"{\"name\":\"%s\",\"msg\":\"%s\"}",key,value);
     if(res==2)
     {
         ESP_LOGI(TAG,"key=%s value=%s",key,value);
     }
+    nvs_close(my_handle);
 }
 
 static esp_err_t echo_handler(httpd_req_t *req)
