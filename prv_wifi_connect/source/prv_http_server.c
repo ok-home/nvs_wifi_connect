@@ -1,5 +1,6 @@
-#include "prv_wifi_connect.h"
 #include "prv_wifi_connect_private.h"
+#include "prv_wifi_connect.h"
+
 
 /* A simple example that demonstrates using websocket echo server
  */
@@ -15,22 +16,22 @@ struct async_resp_arg {
     int fd;
 };
 
-void send_json_string(uint8_t *str, httpd_req_t *req)
+void send_json_string(char *str, httpd_req_t *req)
 {
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
-    ws_pkt.payload = str;
-    ws.pkt.len = strlen(str);
+    ws_pkt.payload = (uint8_t*)str;
+    ws_pkt.len = strlen(str);
     httpd_ws_send_frame(req, &ws_pkt);
 }
 
 void send_nvs_data(httpd_req_t *req)
 {
-    uint8_t buf[128] = {0};
-    uint8_t nvs_data[64] = {0};
+    char buf[128] = {0};
+    char nvs_data[64] = {0};
     nvs_handle_t my_handle;
-    int required_size = 0;
+    size_t required_size = 0;
     
     nvs_open("storage", NVS_READWRITE, &my_handle);
     nvs_get_str(my_handle, "nvsApStaMode", nvs_data, &required_size);
@@ -53,16 +54,16 @@ void send_nvs_data(httpd_req_t *req)
 
 void set_nvs_data(char *jsonstr)
 {
-    char key[16];
-    char value[64];
+    char key[160];
+    char value[164];
     nvs_handle_t my_handle;
     nvs_open("storage", NVS_READWRITE, &my_handle);
     ESP_LOGI(TAG,"jsonstr=%s",jsonstr);
     int res = sscanf(jsonstr,"{\"name\":\"%s\",\"msg\":\"%s\"}",key,value);
-    if(res==2)
-    {
-        ESP_LOGI(TAG,"key=%s value=%s",key,value);
-    }
+//    if(res==2)
+//    {
+        ESP_LOGI(TAG,"num=%d key=%s value=%s",res,key,value);
+//    }
     nvs_close(my_handle);
 }
 
@@ -103,7 +104,7 @@ static esp_err_t echo_handler(httpd_req_t *req)
     }
     ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
 
-    set_nvs_data(ws_pkt.payload);
+    set_nvs_data((char*)ws_pkt.payload);
 
     ret = httpd_ws_send_frame(req, &ws_pkt);
     if (ret != ESP_OK) {

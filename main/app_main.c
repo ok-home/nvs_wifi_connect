@@ -14,7 +14,6 @@
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include "esp_netif.h"
-#include "protocol_examples_common.h"
 
 #include <esp_http_server.h>
 

@@ -1,7 +1,9 @@
 #pragma once
 
 #include "esp_wifi.h"
+#include "esp_mac.h"
 #include "esp_event.h"
+#include "freertos/event_groups.h"
 #include <esp_log.h>
 #include <esp_system.h>
 #include <nvs_flash.h>
@@ -31,3 +33,5 @@
 #define NVS_WIFI_MODE_AP                "modeAp"
 
 #define NVS_STORAGE_NAME                "storage"
+
+void prv_http_server(void);
