@@ -87,7 +87,7 @@ void set_nvs_data(char *jsonstr)
     nvs_handle_t nvs_handle;
     nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle);
     ESP_LOGI(TAG,"jsonstr=%s",jsonstr);
-    esp_er_t err = json_to_str_parm(jsonstr,key,value);
+    esp_err_t err = json_to_str_parm(jsonstr,key,value);
     if(err)
     {
         ESP_LOGE(TAG,"ERR jsonstr %s",jsonstr);
@@ -147,11 +147,11 @@ static esp_err_t ws_handler(httpd_req_t *req)
     }
     set_nvs_data((char*)ws_pkt.payload);
 
-//    ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
-//    ret = httpd_ws_send_frame(req, &ws_pkt);
-//    if (ret != ESP_OK) {
-//        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
-//    }
+    ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
+    ret = httpd_ws_send_frame(req, &ws_pkt);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
+    }
 
     free(buf);
     return ret;
