@@ -11,6 +11,8 @@
 #include "esp_netif.h"
 #include "esp_http_server.h"
 
+#include "jsmn.h"
+
 
 #define DEFAULT_AP_ESP_WIFI_SSID      "Provision_Wifi_AP"
 #define DEFAULT_AP_ESP_WIFI_PASS      ""
@@ -31,6 +33,11 @@
 #define NVS_STA_AP_DEFAULT_MODE_KEY     "nvsApStaMode"
 #define NVS_WIFI_MODE_STA               "modeSta"
 #define NVS_WIFI_MODE_AP                "modeAp"
+
+#define NVS_WIFI_RESTART_KEY            "Wifi_Restart"
+#define NVS_WIFI_RESTART_VALUE_RESTART  "restart"
+#define NVS_WIFI_RESTART_VALUE_WRITE    "write"
+
 
 #define NVS_STORAGE_NAME                "storage"
 

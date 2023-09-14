@@ -182,7 +182,8 @@
         // Echo str ( json )
         var logstr = document.getElementById("LogString");
         // создать сокет по адресу
-        var wsHostStr = "ws://" + document.location.host + "/ws";
+        let wsHostStr = "ws://" + document.location.host + document.location.pathname;
+        wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
         var socket = new WebSocket(wsHostStr);
 
         tstreceive();

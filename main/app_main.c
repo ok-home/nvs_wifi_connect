@@ -229,6 +229,7 @@ void app_main(void)
 #include "prv_wifi_connect.h"
 void app_main(void)
 {
-prv_wifi_connect();
+if(prv_wifi_connect()) // return with error
+    prv_start_http_server(0); // run server
 }
 

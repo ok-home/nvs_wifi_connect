@@ -15,8 +15,36 @@ struct async_resp_arg {
     httpd_handle_t hd;
     int fd;
 };
+static int srv_restart = 0;
+// simple json parse -> only one parametr name/val
+static esp_err_t json_to_str_parm(char *jsonstr, char *nameStr, char *valStr) // распаковать строку json в пару  name/val
+{
+    int r; // количество токенов
+    jsmn_parser p;
+    jsmntok_t t[5]; // только 2 пары параметров и obj
 
-void send_json_string(char *str, httpd_req_t *req)
+    jsmn_init(&p);
+    r = jsmn_parse(&p, jsonstr, strlen(jsonstr), t, sizeof(t) / sizeof(t[0]));
+    if (r < 2)
+    {
+        valStr[0] = 0;
+        nameStr[0] = 0;
+        return ESP_FAIL;
+    }
+    strncpy(nameStr, jsonstr + t[2].start, t[2].end - t[2].start);
+    nameStr[t[2].end - t[2].start] = 0;
+    if (r > 3)
+    {
+        strncpy(valStr, jsonstr + t[4].start, t[4].end - t[4].start);
+        valStr[t[4].end - t[4].start] = 0;
+    }
+    else
+        valStr[0] = 0;
+    return ESP_OK;
+}
+
+
+static void send_json_string(char *str, httpd_req_t *req)
 {
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
@@ -26,48 +54,63 @@ void send_json_string(char *str, httpd_req_t *req)
     httpd_ws_send_frame(req, &ws_pkt);
 }
 
-void send_nvs_data(httpd_req_t *req)
+static void send_nvs_data(httpd_req_t *req)
 {
-    char buf[128] = {0};
-    char nvs_data[64] = {0};
-    nvs_handle_t my_handle;
+    char buf[128];
+    char nvs_data[64];
+    nvs_handle_t nvs_handle;
     size_t required_size = 0;
     
-    nvs_open("storage", NVS_READWRITE, &my_handle);
-    nvs_get_str(my_handle, "nvsApStaMode", nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}","nvsApStaMode",nvs_data);
+    nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle);
+    nvs_get_str(nvs_handle, NVS_STA_AP_DEFAULT_MODE_KEY, nvs_data, &required_size);
+    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_AP_DEFAULT_MODE_KEY,nvs_data);
     send_json_string(buf,req);    
-    nvs_get_str(my_handle, "nvsApSsid", nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}","nvsApSsid",nvs_data);
+    nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_SSID_KEY, nvs_data, &required_size);
+    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_AP_ESP_WIFI_SSID_KEY,nvs_data);
     send_json_string(buf,req);    
-    nvs_get_str(my_handle, "nvsApPass", nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}","nvsApPass",nvs_data);
+    nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_PASS_KEY, nvs_data, &required_size);
+    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_AP_ESP_WIFI_PASS_KEY,nvs_data);
     send_json_string(buf,req);    
-    nvs_get_str(my_handle, "nvsStaSsid", nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}","nvsStaSsid",nvs_data);
+    nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_SSID_KEY, nvs_data, &required_size);
+    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_ESP_WIFI_SSID_KEY,nvs_data);
     send_json_string(buf,req);    
-    nvs_get_str(my_handle, "nvsStaPass", nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}","nvsStaPass",nvs_data);
+    nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_PASS_KEY, nvs_data, &required_size);
+    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_ESP_WIFI_PASS_KEY,nvs_data);
     send_json_string(buf,req);
-    nvs_close(my_handle);
+    nvs_close(nvs_handle);
 }
 
 void set_nvs_data(char *jsonstr)
 {
-    char key[160];
-    char value[164];
-    nvs_handle_t my_handle;
-    nvs_open("storage", NVS_READWRITE, &my_handle);
+    char key[16];
+    char value[64];
+    nvs_handle_t nvs_handle;
+    nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle);
     ESP_LOGI(TAG,"jsonstr=%s",jsonstr);
-    int res = sscanf(jsonstr,"{\"name\":\"%s\",\"msg\":\"%s\"}",key,value);
-//    if(res==2)
-//    {
-        ESP_LOGI(TAG,"num=%d key=%s value=%s",res,key,value);
-//    }
-    nvs_close(my_handle);
+    esp_er_t err = json_to_str_parm(jsonstr,key,value);
+    if(err)
+    {
+        ESP_LOGE(TAG,"ERR jsonstr %s",jsonstr);
+    }
+    else
+    {
+        if(strncmp(key,NVS_WIFI_RESTART_KEY,strlen(NVS_WIFI_RESTART_KEY))!=0) // key/value -> wifi data
+        {
+            nvs_set_str(nvs_handle, key, value);
+        }
+        else // key/value ->  restart or write
+        {
+            if(srv_restart)
+            {
+                nvs_close(nvs_handle);
+                esp_restart();
+            }
+        }
+    }
+    nvs_close(nvs_handle);
 }
 
-static esp_err_t echo_handler(httpd_req_t *req)
+static esp_err_t ws_handler(httpd_req_t *req)
 {
     if (req->method == HTTP_GET) {
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
@@ -102,14 +145,14 @@ static esp_err_t echo_handler(httpd_req_t *req)
         }
         ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
     }
-    ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
-
     set_nvs_data((char*)ws_pkt.payload);
 
-    ret = httpd_ws_send_frame(req, &ws_pkt);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
-    }
+//    ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
+//    ret = httpd_ws_send_frame(req, &ws_pkt);
+//    if (ret != ESP_OK) {
+//        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
+//    }
+
     free(buf);
     return ret;
 }
@@ -122,18 +165,18 @@ static esp_err_t get_handler(httpd_req_t *req)
 
     httpd_resp_send_chunk(req, (const char *)prw_wifi_connect_html_start, prw_wifi_connect_html_size);
     httpd_resp_sendstr_chunk(req, NULL);
-
     return ESP_OK;
 }
+
 static const httpd_uri_t gh = {
-    .uri = "/",
+    .uri = DEFAULT_URI,
     .method = HTTP_GET,
     .handler = get_handler,
     .user_ctx = NULL};
 static const httpd_uri_t ws = {
-        .uri        = "/ws",
+        .uri        = DEFAULT_WS_URI,
         .method     = HTTP_GET,
-        .handler    = echo_handler,
+        .handler    = ws_handler,
         .user_ctx   = NULL,
         .is_websocket = true
 };
@@ -148,11 +191,9 @@ static httpd_handle_t start_webserver(void)
     if (httpd_start(&server, &config) == ESP_OK) {
         // Registering the ws handler
         ESP_LOGI(TAG, "Registering URI handlers");
-        httpd_register_uri_handler(server, &ws);
-        httpd_register_uri_handler(server, &gh);
+        if(prv_register_uri_handler(server) == ESP_OK)
         return server;
     }
-
     ESP_LOGI(TAG, "Error starting server!");
     return NULL;
 }
@@ -187,11 +228,23 @@ static void connect_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-
-void prv_http_server(void)
+esp_err_t prv_register_uri_handler(httpd_handle_t server)
 {
-    static httpd_handle_t server = NULL;
+    esp_err_t ret = ESP_OK;
+    ret = httpd_register_uri_handler(server, &gh);
+    if (ret)
+        goto _ret;
+    ret = httpd_register_uri_handler(server, &ws);
+    if (ret)
+        goto _ret;
+_ret:
+    return ret;
+}
 
+void prv_start_http_server(int restart)
+{
+     static httpd_handle_t server = NULL;
+     srv_restart = restart;
 
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
