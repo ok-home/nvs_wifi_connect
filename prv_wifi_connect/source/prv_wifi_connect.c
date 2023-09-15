@@ -226,7 +226,9 @@ esp_err_t prv_wifi_connect(void)
         ESP_LOGE(TAG,"ERR start default AP");
     }
     // start default prv server
-    //prv_start_http_server(0);
+        wifi_init_sta("ok-home-Keenetic", "RicohPriport");
+    //prv_start_http_server(0); // run server
+
     return err;
 }
 

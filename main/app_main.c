@@ -230,8 +230,7 @@ void app_main(void)
 
 void app_main(void)
 {
-    wifi_init_sta("ok-home-Keenetic", "RicohPriport");
-//prv_wifi_connect(); // return with error
-prv_start_http_server(0); // run server
+prv_wifi_connect(); // return with error
+prv_start_http_server(1); // run server
 }
 

@@ -1,6 +1,9 @@
 #include "prv_wifi_connect_private.h"
 #include "prv_wifi_connect.h"
 
+#include "freertos/task.h"
+#include "freertos/queue.h"
+
 
 /* A simple example that demonstrates using websocket echo server
  */
@@ -16,6 +19,7 @@ struct async_resp_arg {
     int fd;
 };
 static int srv_restart = 0;
+
 // simple json parse -> only one parametr name/val
 static esp_err_t json_to_str_parm(char *jsonstr, char *nameStr, char *valStr) // распаковать строку json в пару  name/val
 {
@@ -46,6 +50,7 @@ static esp_err_t json_to_str_parm(char *jsonstr, char *nameStr, char *valStr) //
 
 static void send_json_string(char *str, httpd_req_t *req)
 {
+    ESP_LOGI("SND","%s",str);
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
@@ -56,24 +61,29 @@ static void send_json_string(char *str, httpd_req_t *req)
 
 static void send_nvs_data(httpd_req_t *req)
 {
-    char buf[128];
-    char nvs_data[64];
+    char buf[128]={0};
+    char nvs_data[64] = {0};
     nvs_handle_t nvs_handle;
     size_t required_size = 0;
     
     nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle);
+    required_size = sizeof(nvs_data);
     nvs_get_str(nvs_handle, NVS_STA_AP_DEFAULT_MODE_KEY, nvs_data, &required_size);
     snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_AP_DEFAULT_MODE_KEY,nvs_data);
     send_json_string(buf,req);    
+    required_size = sizeof(nvs_data);
     nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_SSID_KEY, nvs_data, &required_size);
     snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_AP_ESP_WIFI_SSID_KEY,nvs_data);
     send_json_string(buf,req);    
+    required_size = sizeof(nvs_data);
     nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_PASS_KEY, nvs_data, &required_size);
     snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_AP_ESP_WIFI_PASS_KEY,nvs_data);
     send_json_string(buf,req);    
-    nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_SSID_KEY, nvs_data, &required_size);
+    required_size = sizeof(nvs_data);
+    if(nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_SSID_KEY, nvs_data, &required_size)) ESP_LOGI("RD","ERR");
     snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_ESP_WIFI_SSID_KEY,nvs_data);
     send_json_string(buf,req);    
+    required_size = sizeof(nvs_data);
     nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_PASS_KEY, nvs_data, &required_size);
     snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_ESP_WIFI_PASS_KEY,nvs_data);
     send_json_string(buf,req);
@@ -96,14 +106,17 @@ void set_nvs_data(char *jsonstr)
     {
         if(strncmp(key,NVS_WIFI_RESTART_KEY,strlen(NVS_WIFI_RESTART_KEY))!=0) // key/value -> wifi data
         {
-            ESP_LOGI(TAG,"key %s value %s",key,value);
-            //nvs_set_str(nvs_handle, key, value);
+            ESP_LOGI(TAG,"write key %s value %s",key,value);
+            if(nvs_set_str(nvs_handle, key, value))
+             {ESP_LOGI(TAG,"ERR WRITE key %s value %s",key,value);}
+
         }
         else // key/value ->  restart or write
         {
+            nvs_commit(nvs_handle);
             if(srv_restart)
             {
-                ESP_LOGEI(TAG,"restart key %s value %s",key,value);
+                ESP_LOGE(TAG,"restart key %s value %s",key,value);
                 nvs_close(nvs_handle);
                 //esp_restart();
             }
@@ -148,13 +161,13 @@ static esp_err_t ws_handler(httpd_req_t *req)
         ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
     }
     set_nvs_data((char*)ws_pkt.payload);
-
+/*
     ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
     ret = httpd_ws_send_frame(req, &ws_pkt);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
     }
-
+*/
     free(buf);
     return ret;
 }
