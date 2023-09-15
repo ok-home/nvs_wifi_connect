@@ -148,6 +148,7 @@
             console.log(JSON.stringify({ name: pass.id, msg: pass.value }));
         }
         function receiveWsData(data) {
+            console.log(data + " input");
             try {
                 let obj = JSON.parse(data);
                 document.getElementById(obj.name).value = obj.msg;
@@ -186,7 +187,7 @@
         wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
         var socket = new WebSocket(wsHostStr);
 
-        tstreceive();
+        //tstreceive();
         
 
     </script>

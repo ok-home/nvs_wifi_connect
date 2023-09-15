@@ -90,20 +90,22 @@ void set_nvs_data(char *jsonstr)
     esp_err_t err = json_to_str_parm(jsonstr,key,value);
     if(err)
     {
-        ESP_LOGE(TAG,"ERR jsonstr %s",jsonstr);
+        ESP_LOGI(TAG,"ERR jsonstr %s",jsonstr);
     }
     else
     {
         if(strncmp(key,NVS_WIFI_RESTART_KEY,strlen(NVS_WIFI_RESTART_KEY))!=0) // key/value -> wifi data
         {
-            nvs_set_str(nvs_handle, key, value);
+            ESP_LOGI(TAG,"key %s value %s",key,value);
+            //nvs_set_str(nvs_handle, key, value);
         }
         else // key/value ->  restart or write
         {
             if(srv_restart)
             {
+                ESP_LOGEI(TAG,"restart key %s value %s",key,value);
                 nvs_close(nvs_handle);
-                esp_restart();
+                //esp_restart();
             }
         }
     }
