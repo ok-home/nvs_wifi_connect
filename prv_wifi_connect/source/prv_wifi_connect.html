@@ -119,12 +119,10 @@
         document.getElementById("Wifi_Restart").addEventListener("click", function (e) {
             send_wifi_data();
             socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "restart" }));
-            console.log(JSON.stringify({ name: "Wifi_Restart", msg: "restart" }));
         });
         document.getElementById("Wifi_Upload").addEventListener("click", function (e) {
             send_wifi_data();
             socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "write" }));
-            console.log(JSON.stringify({ name: "Wifi_Restart", msg: "write" }));
         });
 
         function send_wifi_data() {
@@ -143,12 +141,8 @@
             socket.send(JSON.stringify({ name: ApStaMode.id, msg: ApStaMode.value }));
             socket.send(JSON.stringify({ name: ssid.id, msg: ssid.value }));
             socket.send(JSON.stringify({ name: pass.id, msg: pass.value }));
-            console.log(JSON.stringify({ name: ApStaMode.id, msg: ApStaMode.value }));
-            console.log(JSON.stringify({ name: ssid.id, msg: ssid.value }));
-            console.log(JSON.stringify({ name: pass.id, msg: pass.value }));
         }
         function receiveWsData(data) {
-            console.log(data + " input");
             try {
                 let obj = JSON.parse(data);
                 document.getElementById(obj.name).value = obj.msg;
@@ -161,35 +155,16 @@
                 console.log(data + " catch");
             }
         };
-        let arr = [
-            { name: "nvsStaSsid", msg: "stassid" },
-            { name: "nvsStaPass", msg: "stapass" },
-            { name: "nvsApSsid", msg: "apssid" },
-            { name: "nvsApPass", msg: "appass" },
-            { name: "nvsApStaMode", msg: "modeAp" },
-        ];
-        function tstreceive() {
-            for (let i = 0; i < arr.length; i++)
-                receiveWsData(JSON.stringify({ name: arr[i].name, msg: arr[i].msg }));
-        };
-
     </script>
 
-    <div id="LogString" class="logstr"></div>
     <script>  // Прием, обработка и отправка данных в WS
     </script>
 
     <script> // основной старт скрипта, открыть сокет
-        // Echo str ( json )
-        var logstr = document.getElementById("LogString");
         // создать сокет по адресу
         let wsHostStr = "ws://" + document.location.host + document.location.pathname;
         wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
         var socket = new WebSocket(wsHostStr);
-
-        //tstreceive();
-        
-
     </script>
 
     <script> // события WS

@@ -14,5 +14,5 @@ idf_component_register(
         driver 
         esp_wifi
     EMBED_FILES 
-        source/prw_wifi_connect.html
+        source/prv_wifi_connect.html
 )

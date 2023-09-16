@@ -4,20 +4,10 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
+#include "jsmn.h"
 
-/* A simple example that demonstrates using websocket echo server
- */
 static const char *TAG = "prv_http_server";
 
-/*
- * Structure holding server handle
- * and internal socket fd in order
- * to use out of request send
- */
-struct async_resp_arg {
-    httpd_handle_t hd;
-    int fd;
-};
 static int srv_restart = 0;
 
 // simple json parse -> only one parametr name/val
@@ -47,78 +37,75 @@ static esp_err_t json_to_str_parm(char *jsonstr, char *nameStr, char *valStr) //
     return ESP_OK;
 }
 
-
 static void send_json_string(char *str, httpd_req_t *req)
 {
-    ESP_LOGI("SND","%s",str);
     httpd_ws_frame_t ws_pkt;
     memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
-    ws_pkt.payload = (uint8_t*)str;
+    ws_pkt.payload = (uint8_t *)str;
     ws_pkt.len = strlen(str);
     httpd_ws_send_frame(req, &ws_pkt);
 }
 
 static void send_nvs_data(httpd_req_t *req)
 {
-    char buf[128]={0};
+    char buf[128] = {0};
     char nvs_data[64] = {0};
     nvs_handle_t nvs_handle;
     size_t required_size = 0;
-    
+
     nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle);
     required_size = sizeof(nvs_data);
     nvs_get_str(nvs_handle, NVS_STA_AP_DEFAULT_MODE_KEY, nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_AP_DEFAULT_MODE_KEY,nvs_data);
-    send_json_string(buf,req);    
+    snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_STA_AP_DEFAULT_MODE_KEY, nvs_data);
+    send_json_string(buf, req);
     required_size = sizeof(nvs_data);
     nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_SSID_KEY, nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_AP_ESP_WIFI_SSID_KEY,nvs_data);
-    send_json_string(buf,req);    
+    snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_AP_ESP_WIFI_SSID_KEY, nvs_data);
+    send_json_string(buf, req);
     required_size = sizeof(nvs_data);
     nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_PASS_KEY, nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_AP_ESP_WIFI_PASS_KEY,nvs_data);
-    send_json_string(buf,req);    
+    snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_AP_ESP_WIFI_PASS_KEY, nvs_data);
+    send_json_string(buf, req);
     required_size = sizeof(nvs_data);
-    if(nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_SSID_KEY, nvs_data, &required_size)) ESP_LOGI("RD","ERR");
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_ESP_WIFI_SSID_KEY,nvs_data);
-    send_json_string(buf,req);    
+    nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_SSID_KEY, nvs_data, &required_size);
+    snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_STA_ESP_WIFI_SSID_KEY, nvs_data);
+    send_json_string(buf, req);
     required_size = sizeof(nvs_data);
     nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_PASS_KEY, nvs_data, &required_size);
-    snprintf(buf,sizeof(buf),"{\"name\":\"%s\",\"msg\":\"%s\"}",NVS_STA_ESP_WIFI_PASS_KEY,nvs_data);
-    send_json_string(buf,req);
+    snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_STA_ESP_WIFI_PASS_KEY, nvs_data);
+    send_json_string(buf, req);
     nvs_close(nvs_handle);
 }
 
-void set_nvs_data(char *jsonstr)
+static void set_nvs_data(char *jsonstr)
 {
     char key[16];
     char value[64];
     nvs_handle_t nvs_handle;
     nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle);
-    ESP_LOGI(TAG,"jsonstr=%s",jsonstr);
-    esp_err_t err = json_to_str_parm(jsonstr,key,value);
-    if(err)
+    esp_err_t err = json_to_str_parm(jsonstr, key, value);
+    if (err)
     {
-        ESP_LOGI(TAG,"ERR jsonstr %s",jsonstr);
+        ESP_LOGE(TAG, "ERR jsonstr %s", jsonstr);
     }
     else
     {
-        if(strncmp(key,NVS_WIFI_RESTART_KEY,strlen(NVS_WIFI_RESTART_KEY))!=0) // key/value -> wifi data
+        if (strncmp(key, NVS_WIFI_RESTART_KEY, strlen(NVS_WIFI_RESTART_KEY)) != 0) // key/value -> wifi data
         {
-            ESP_LOGI(TAG,"write key %s value %s",key,value);
-            if(nvs_set_str(nvs_handle, key, value))
-             {ESP_LOGI(TAG,"ERR WRITE key %s value %s",key,value);}
-
+            if (nvs_set_str(nvs_handle, key, value))
+            {
+                ESP_LOGE(TAG, "ERR WRITE key %s value %s", key, value);
+            }
         }
         else // key/value ->  restart or write
         {
             nvs_commit(nvs_handle);
-            if(srv_restart)
+            if (srv_restart || strncmp(value, NVS_WIFI_RESTART_VALUE_RESTART, strlen(NVS_WIFI_RESTART_VALUE_RESTART)) == 0)
             {
-                ESP_LOGE(TAG,"restart key %s value %s",key,value);
+                ESP_LOGI(TAG, "restart key %s value %s", key, value);
                 nvs_close(nvs_handle);
-                //esp_restart();
+                esp_restart();
             }
         }
     }
@@ -127,7 +114,8 @@ void set_nvs_data(char *jsonstr)
 
 static esp_err_t ws_handler(httpd_req_t *req)
 {
-    if (req->method == HTTP_GET) {
+    if (req->method == HTTP_GET)
+    {
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
         send_nvs_data(req);
         return ESP_OK;
@@ -138,76 +126,66 @@ static esp_err_t ws_handler(httpd_req_t *req)
     ws_pkt.type = HTTPD_WS_TYPE_TEXT;
     /* Set max_len = 0 to get the frame len */
     esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
-    if (ret != ESP_OK) {
+    if (ret != ESP_OK)
+    {
         ESP_LOGE(TAG, "httpd_ws_recv_frame failed to get frame len with %d", ret);
         return ret;
     }
-    ESP_LOGI(TAG, "frame len is %d", ws_pkt.len);
-    if (ws_pkt.len) {
+    if (ws_pkt.len)
+    {
         /* ws_pkt.len + 1 is for NULL termination as we are expecting a string */
         buf = calloc(1, ws_pkt.len + 1);
-        if (buf == NULL) {
+        if (buf == NULL)
+        {
             ESP_LOGE(TAG, "Failed to calloc memory for buf");
             return ESP_ERR_NO_MEM;
         }
         ws_pkt.payload = buf;
         /* Set max_len = ws_pkt.len to get the frame payload */
         ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
-        if (ret != ESP_OK) {
+        if (ret != ESP_OK)
+        {
             ESP_LOGE(TAG, "httpd_ws_recv_frame failed with %d", ret);
             free(buf);
             return ret;
         }
-        ESP_LOGI(TAG, "Got packet with message: %s", ws_pkt.payload);
     }
-    set_nvs_data((char*)ws_pkt.payload);
-/*
-    ESP_LOGI(TAG, "Packet type: %d", ws_pkt.type);
-    ret = httpd_ws_send_frame(req, &ws_pkt);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "httpd_ws_send_frame failed with %d", ret);
-    }
-*/
+    set_nvs_data((char *)ws_pkt.payload);
     free(buf);
     return ret;
 }
-
 static esp_err_t get_handler(httpd_req_t *req)
 {
-    extern const unsigned char prw_wifi_connect_html_start[] asm("_binary_prw_wifi_connect_html_start");
-    extern const unsigned char prw_wifi_connect_html_end[] asm("_binary_prw_wifi_connect_html_end");
-    const size_t prw_wifi_connect_html_size = (prw_wifi_connect_html_end - prw_wifi_connect_html_start);
+    extern const unsigned char prv_wifi_connect_html_start[] asm("_binary_prv_wifi_connect_html_start");
+    extern const unsigned char prv_wifi_connect_html_end[] asm("_binary_prv_wifi_connect_html_end");
+    const size_t prv_wifi_connect_html_size = (prv_wifi_connect_html_end - prv_wifi_connect_html_start);
 
-    httpd_resp_send_chunk(req, (const char *)prw_wifi_connect_html_start, prw_wifi_connect_html_size);
+    httpd_resp_send_chunk(req, (const char *)prv_wifi_connect_html_start, prv_wifi_connect_html_size);
     httpd_resp_sendstr_chunk(req, NULL);
     return ESP_OK;
 }
-
 static const httpd_uri_t gh = {
     .uri = DEFAULT_URI,
     .method = HTTP_GET,
     .handler = get_handler,
     .user_ctx = NULL};
 static const httpd_uri_t ws = {
-        .uri        = DEFAULT_WS_URI,
-        .method     = HTTP_GET,
-        .handler    = ws_handler,
-        .user_ctx   = NULL,
-        .is_websocket = true
-};
-
+    .uri = DEFAULT_WS_URI,
+    .method = HTTP_GET,
+    .handler = ws_handler,
+    .user_ctx = NULL,
+    .is_websocket = true};
 static httpd_handle_t start_webserver(void)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-
     // Start the httpd server
-    ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
-    if (httpd_start(&server, &config) == ESP_OK) {
+    if (httpd_start(&server, &config) == ESP_OK)
+    {
         // Registering the ws handler
         ESP_LOGI(TAG, "Registering URI handlers");
-        if(prv_register_uri_handler(server) == ESP_OK)
-        return server;
+        if (prv_register_uri_handler(server) == ESP_OK)
+            return server;
     }
     ESP_LOGI(TAG, "Error starting server!");
     return NULL;
@@ -219,25 +197,30 @@ static esp_err_t stop_webserver(httpd_handle_t server)
     return httpd_stop(server);
 }
 
-static void disconnect_handler(void* arg, esp_event_base_t event_base,
-                               int32_t event_id, void* event_data)
+static void disconnect_handler(void *arg, esp_event_base_t event_base,
+                               int32_t event_id, void *event_data)
 {
-    httpd_handle_t* server = (httpd_handle_t*) arg;
-    if (*server) {
+    httpd_handle_t *server = (httpd_handle_t *)arg;
+    if (*server)
+    {
         ESP_LOGI(TAG, "Stopping webserver");
-        if (stop_webserver(*server) == ESP_OK) {
+        if (stop_webserver(*server) == ESP_OK)
+        {
             *server = NULL;
-        } else {
+        }
+        else
+        {
             ESP_LOGE(TAG, "Failed to stop http server");
         }
     }
 }
 
-static void connect_handler(void* arg, esp_event_base_t event_base,
-                            int32_t event_id, void* event_data)
+static void connect_handler(void *arg, esp_event_base_t event_base,
+                            int32_t event_id, void *event_data)
 {
-    httpd_handle_t* server = (httpd_handle_t*) arg;
-    if (*server == NULL) {
+    httpd_handle_t *server = (httpd_handle_t *)arg;
+    if (*server == NULL)
+    {
         ESP_LOGI(TAG, "Starting webserver");
         *server = start_webserver();
     }
@@ -258,8 +241,8 @@ _ret:
 
 void prv_start_http_server(int restart)
 {
-     static httpd_handle_t server = NULL;
-     srv_restart = restart;
+    static httpd_handle_t server = NULL;
+    srv_restart = restart;
 
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
