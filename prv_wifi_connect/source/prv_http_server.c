@@ -36,7 +36,6 @@ static esp_err_t json_to_str_parm(char *jsonstr, char *nameStr, char *valStr) //
         valStr[0] = 0;
     return ESP_OK;
 }
-
 static void send_json_string(char *str, httpd_req_t *req)
 {
     httpd_ws_frame_t ws_pkt;
@@ -46,7 +45,6 @@ static void send_json_string(char *str, httpd_req_t *req)
     ws_pkt.len = strlen(str);
     httpd_ws_send_frame(req, &ws_pkt);
 }
-
 static void send_nvs_data(httpd_req_t *req)
 {
     char buf[128] = {0};
@@ -77,8 +75,7 @@ static void send_nvs_data(httpd_req_t *req)
     send_json_string(buf, req);
     nvs_close(nvs_handle);
 }
-
-static void set_nvs_data(char *jsonstr)
+static void set_nvs_data(char *jsonstr, httpd_req_t *req)
 {
     char key[16];
     char value[64];
@@ -105,13 +102,22 @@ static void set_nvs_data(char *jsonstr)
             {
                 ESP_LOGI(TAG, "restart key %s value %s", key, value);
                 nvs_close(nvs_handle);
-                esp_restart();
+
+                httpd_ws_frame_t ws_pkt;
+                memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+                ws_pkt.type = HTTPD_WS_TYPE_CLOSE;
+                ws_pkt.payload = NULL;
+                ws_pkt.len = 0;
+                httpd_ws_send_frame(req, &ws_pkt);
+                httpd_stop(req->handle);
+                ESP_LOGI("STOP", "STOP");
+                
+                // esp_restart();
             }
         }
     }
     nvs_close(nvs_handle);
 }
-
 static esp_err_t ws_handler(httpd_req_t *req)
 {
     if (req->method == HTTP_GET)
@@ -150,7 +156,7 @@ static esp_err_t ws_handler(httpd_req_t *req)
             return ret;
         }
     }
-    set_nvs_data((char *)ws_pkt.payload);
+    set_nvs_data((char *)ws_pkt.payload, req);
     free(buf);
     return ret;
 }
@@ -190,13 +196,11 @@ static httpd_handle_t start_webserver(void)
     ESP_LOGI(TAG, "Error starting server!");
     return NULL;
 }
-
 static esp_err_t stop_webserver(httpd_handle_t server)
 {
     // Stop the httpd server
     return httpd_stop(server);
 }
-
 static void disconnect_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
 {
@@ -214,7 +218,6 @@ static void disconnect_handler(void *arg, esp_event_base_t event_base,
         }
     }
 }
-
 static void connect_handler(void *arg, esp_event_base_t event_base,
                             int32_t event_id, void *event_data)
 {
@@ -225,7 +228,6 @@ static void connect_handler(void *arg, esp_event_base_t event_base,
         *server = start_webserver();
     }
 }
-
 esp_err_t prv_register_uri_handler(httpd_handle_t server)
 {
     esp_err_t ret = ESP_OK;
@@ -238,7 +240,6 @@ esp_err_t prv_register_uri_handler(httpd_handle_t server)
 _ret:
     return ret;
 }
-
 void prv_start_http_server(int restart)
 {
     static httpd_handle_t server = NULL;

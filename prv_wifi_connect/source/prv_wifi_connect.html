@@ -169,10 +169,13 @@
 
     <script> // события WS
         socket.onopen = function () {
+            console.log("connect");
         };
         socket.onclose = function (event) {
+            console.log("close");
         };
         socket.onerror = function () {
+            console.log("error");
         };
         socket.onmessage = function (event) {
             receiveWsData(event.data);
