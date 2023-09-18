@@ -16,6 +16,7 @@ enum
 };
 
 static int srv_restart = 0;
+static prv_wifi_connect_register_uri_handler srv_register_uri_handler;
 
 // simple json parse -> only one parametr name/val
 static esp_err_t json_to_str_parm(char *jsonstr, char *nameStr, char *valStr) // распаковать строку json в пару  name/val
@@ -198,9 +199,16 @@ static httpd_handle_t start_webserver(void)
     {
         // Registering the ws handler
         ESP_LOGI(TAG, "Registering URI handlers");
-        if (prv_register_uri_handler(server) == ESP_OK)
+        if (prv_register_uri_handler(server) != ESP_OK)
+            {goto _ret;}
+        if(srv_register_uri_handler)
+        {
+            if(srv_register_uri_handler(server) != ESP_OK)
+              {goto _ret;}
+        }
             return server;
     }
+_ret:
     ESP_LOGI(TAG, "Error starting server!");
     return NULL;
 }
@@ -278,6 +286,7 @@ httpd_handle_t prv_start_http_server(int restart, prv_wifi_connect_register_uri_
 {
     static httpd_handle_t server = NULL;
     srv_restart = restart;
+    srv_register_uri_handler = register_uri_handler;
 
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
