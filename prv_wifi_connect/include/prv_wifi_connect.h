@@ -50,6 +50,12 @@ esp_err_t prv_wifi_init_sta(char *sta_ssid, char *sta_pass);
 *           ESP_FAIL    -> register FAIL
 */
 esp_err_t prv_register_uri_handler(httpd_handle_t server);
+
+/*
+*   @brief handle for connecting to the prv_http_server server
+*/
+typedef esp_err_t (*prv_wifi_connect_register_uri_handler)(httpd_handle_t server);
+
 /*
 *   @brief  start provision httpd server, uri web page read existing nvs wifi data  & write new nvs wifi data ( ap/sta mode, wifi ssid/pass )
 *           uri page -> DEFAULT_URI
@@ -64,10 +70,6 @@ esp_err_t prv_register_uri_handler(httpd_handle_t server);
 *           NULL                  -> server start FAIL
 */
 httpd_handle_t prv_start_http_server(int restart_mode , prv_wifi_connect_register_uri_handler register_uri_handler);
-/*
-*   @brief handle for connecting to the prv_http_server server
-*/
-typedef esp_err_t (*prv_wifi_connect_register_uri_handler)(httpd_handle_t server);
 
 #ifdef __cplusplus
 }
