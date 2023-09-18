@@ -8,6 +8,13 @@
 
 static const char *TAG = "prv_http_server";
 
+ESP_EVENT_DECLARE_BASE(PRV_STOP_HTTPD);
+ESP_EVENT_DEFINE_BASE(PRV_STOP_HTTPD);
+enum {                                       
+    PRV_STOP_HTTPD_EVENT
+};
+
+
 static int srv_restart = 0;
 
 // simple json parse -> only one parametr name/val
@@ -45,6 +52,7 @@ static void send_json_string(char *str, httpd_req_t *req)
     ws_pkt.len = strlen(str);
     httpd_ws_send_frame(req, &ws_pkt);
 }
+// read & send initial wifi data from nvs
 static void send_nvs_data(httpd_req_t *req)
 {
     char buf[128] = {0};
@@ -75,13 +83,14 @@ static void send_nvs_data(httpd_req_t *req)
     send_json_string(buf, req);
     nvs_close(nvs_handle);
 }
+// write wifi data from ws to nvs
 static void set_nvs_data(char *jsonstr, httpd_req_t *req)
 {
     char key[16];
     char value[64];
     nvs_handle_t nvs_handle;
     nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle);
-    esp_err_t err = json_to_str_parm(jsonstr, key, value);
+    esp_err_t err = json_to_str_parm(jsonstr, key, value);  // decode json string to key/value pair
     if (err)
     {
         ESP_LOGE(TAG, "ERR jsonstr %s", jsonstr);
@@ -90,40 +99,47 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
     {
         if (strncmp(key, NVS_WIFI_RESTART_KEY, strlen(NVS_WIFI_RESTART_KEY)) != 0) // key/value -> wifi data
         {
-            if (nvs_set_str(nvs_handle, key, value))
+            if (nvs_set_str(nvs_handle, key, value)) // write key/value to nvs
             {
                 ESP_LOGE(TAG, "ERR WRITE key %s value %s", key, value);
             }
+            nvs_commit(nvs_handle); 
+            nvs_close(nvs_handle);
         }
         else // key/value ->  restart or write
         {
-            nvs_commit(nvs_handle);
-            if (srv_restart || strncmp(value, NVS_WIFI_RESTART_VALUE_RESTART, strlen(NVS_WIFI_RESTART_VALUE_RESTART)) == 0)
+            nvs_close(nvs_handle);
+            ESP_LOGI(TAG, "restart key %s value %s", key, value);
+            // if value == NVS_WIFI_RESTART_VALUE_RESTART -> full restart esp32 regardless of value srv_restart
+            // if srv_restart == PRV_MODE_STAY_ACTIVE -> no operation
+            // if srv_restart == PRV_MODE_STOP_SERVER -> stop httpd
+            // if srv_restart == PRV_MODE_RESTART_ESP32 -> full restart esp32 regardless of value NVS_WIFI_RESTART_VALUE_RESTART
+            if( srv_restart == PRV_MODE_RESTART_ESP32 || strncmp(value, NVS_WIFI_RESTART_VALUE_RESTART, strlen(NVS_WIFI_RESTART_VALUE_RESTART)) == 0 )
             {
-                ESP_LOGI(TAG, "restart key %s value %s", key, value);
-                nvs_close(nvs_handle);
-
+                esp_restart();
+            }
+            else if (srv_restart == PRV_MODE_STOP_SERVER )
+            {
+                // close ws
                 httpd_ws_frame_t ws_pkt;
                 memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
                 ws_pkt.type = HTTPD_WS_TYPE_CLOSE;
                 ws_pkt.payload = NULL;
                 ws_pkt.len = 0;
                 httpd_ws_send_frame(req, &ws_pkt);
-                httpd_stop(req->handle);
+                // stop httpdserver
+                ESP_ERROR_CHECK(esp_event_post(PRV_STOP_HTTPD, PRV_STOP_HTTPD_EVENT, NULL, 0, portMAX_DELAY));
                 ESP_LOGI("STOP", "STOP");
-                
-                // esp_restart();
             }
         }
     }
-    nvs_close(nvs_handle);
 }
 static esp_err_t ws_handler(httpd_req_t *req)
 {
     if (req->method == HTTP_GET)
     {
         ESP_LOGI(TAG, "Handshake done, the new connection was opened");
-        send_nvs_data(req);
+        send_nvs_data(req); // read & send initial wifi data from nvs
         return ESP_OK;
     }
     httpd_ws_frame_t ws_pkt;
@@ -211,6 +227,7 @@ static void disconnect_handler(void *arg, esp_event_base_t event_base,
         if (stop_webserver(*server) == ESP_OK)
         {
             *server = NULL;
+            ESP_LOGI(TAG, "Stopping webserver OK");
         }
         else
         {
@@ -240,7 +257,7 @@ esp_err_t prv_register_uri_handler(httpd_handle_t server)
 _ret:
     return ret;
 }
-void prv_start_http_server(int restart)
+httpd_handle_t prv_start_http_server(int restart,prv_wifi_connect_register_uri_handler register_uri_handler)
 {
     static httpd_handle_t server = NULL;
     srv_restart = restart;
@@ -251,5 +268,8 @@ void prv_start_http_server(int restart)
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STACONNECTED, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &disconnect_handler, &server));
 
+    ESP_ERROR_CHECK(esp_event_handler_register(PRV_STOP_HTTPD, PRV_STOP_HTTPD_EVENT, &disconnect_handler, &server));
+
     server = start_webserver();
+    return server;
 }
