@@ -17,11 +17,6 @@ enum {
 extern "C"
 {
 #endif
-/*
-*   @brief handle for connecting to the prv_http_server server
-*        void prv_start_http_server(int restart_mode , prv_wifi_connect_register_uri_handler register_uri_handler);
-*/
-typedef esp_err_t (*prv_wifi_connect_register_uri_handler)(httpd_handle_t server);
 
 /*
 *   @brief  connect to wifi
