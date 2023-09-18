@@ -1,5 +1,8 @@
 #pragma once
 
+#include <esp_system.h>
+#include <esp_http_server.h>
+
 #define DEFAULT_URI "/wifi"
 #define DEFAULT_WS_URI "/wifi/ws"
 

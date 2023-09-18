@@ -6,12 +6,10 @@ idf_component_register(
         include
     PRIV_INCLUDE_DIRS 
         private_include
-    #REQUIRES 
-       
+    REQUIRES 
+       esp_http_server
     PRIV_REQUIRES 
-        esp_http_server
         nvs_flash 
-        driver 
         esp_wifi
     EMBED_FILES 
         source/prv_wifi_connect.html
