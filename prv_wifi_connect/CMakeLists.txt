@@ -8,7 +8,7 @@ idf_component_register(
         private_include
     REQUIRES 
        esp_http_server
-       #mdns
+       mdns
     PRIV_REQUIRES 
         nvs_flash 
         esp_wifi
