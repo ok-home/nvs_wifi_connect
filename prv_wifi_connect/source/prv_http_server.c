@@ -180,12 +180,12 @@ static esp_err_t get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 static const httpd_uri_t gh = {
-    .uri = DEFAULT_URI,
+    .uri = CONFIG_DEFAULT_URI,
     .method = HTTP_GET,
     .handler = get_handler,
     .user_ctx = NULL};
 static const httpd_uri_t ws = {
-    .uri = DEFAULT_WS_URI,
+    .uri = CONFIG_DEFAULT_WS_URI,
     .method = HTTP_GET,
     .handler = ws_handler,
     .user_ctx = NULL,

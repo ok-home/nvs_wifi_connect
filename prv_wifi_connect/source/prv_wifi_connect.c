@@ -1,6 +1,11 @@
 #include "prv_wifi_connect_private.h"
 #include "prv_wifi_connect.h"
 
+// TEST MDNS
+#include "mdns.h"
+#include "lwip/apps/netbiosns.h"
+// -TEST MDNS
+
 /* FreeRTOS event group to signal when we are connected*/
 static EventGroupHandle_t s_wifi_event_group;
 
@@ -183,6 +188,22 @@ static esp_err_t nvs_get_key_value_str(char *key, char *value)
 _ret:
     return ret;
 }
+// TEST MDNS
+static void initialise_mdns(void)
+{
+    mdns_init();
+    mdns_hostname_set("esp-home");
+    mdns_instance_name_set("esp home web server");
+
+    mdns_txt_item_t serviceTxtData[] = {
+        {"board", "esp32"},
+        {"path", "/"}
+    };
+
+    ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData,
+                                     sizeof(serviceTxtData) / sizeof(serviceTxtData[0])));
+}
+// - TEST MDNS
 esp_err_t prv_wifi_connect(void)
 {
     int nvs_init = 0;
@@ -201,6 +222,12 @@ esp_err_t prv_wifi_connect(void)
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+// TEST MDNS
+    initialise_mdns();
+    netbiosns_init();
+    netbiosns_set_name("esp-home");
+// - TEST MDNS
 
     if(nvs_init || nvs_get_key_value_str(NVS_STA_AP_DEFAULT_MODE_KEY, nvs_mode) ) // nvs erase -> no valid data for connect -> default AP mode
     {
@@ -229,7 +256,7 @@ esp_err_t prv_wifi_connect(void)
     }
     if ( err )
     {
-        wifi_init_softap(DEFAULT_AP_ESP_WIFI_SSID,DEFAULT_AP_ESP_WIFI_PASS);
+        wifi_init_softap(CONFIG_DEFAULT_AP_ESP_WIFI_SSID,CONFIG_DEFAULT_AP_ESP_WIFI_PASS);
         ESP_LOGE(TAG,"ERR start default AP");
     }
 

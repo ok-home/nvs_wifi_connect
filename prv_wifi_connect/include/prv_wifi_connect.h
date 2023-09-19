@@ -3,12 +3,6 @@
 #include <esp_system.h>
 #include <esp_http_server.h>
 
-#define DEFAULT_URI "/wifi"
-#define DEFAULT_WS_URI "/wifi/ws"
-
-#define DEFAULT_AP_ESP_WIFI_SSID "Provision_Wifi_AP"
-#define DEFAULT_AP_ESP_WIFI_PASS ""
-
 
 enum {
     PRV_MODE_STAY_ACTIVE, // -> no operation
@@ -26,7 +20,7 @@ extern "C"
 *           connect mode ( ap/sta , ssid/pass ) read from NVS
 *   @return
 *           ESP_OK      -> mode read from NVS & connect to wifi OK
-*           ESP_FAIL    -> can`t connect to wifi with NVS data, create AP  with DEFAULT_AP_ESP_WIFI_SSID/DEFAULT_AP_ESP_WIFI_PASS
+*           ESP_FAIL    -> can`t connect to wifi with NVS data, create AP  with CONFIG_DEFAULT_AP_ESP_WIFI_SSID/CONFIG_DEFAULT_AP_ESP_WIFI_PASS
 */
 esp_err_t prv_wifi_connect(void);
 /*
@@ -46,7 +40,7 @@ void prv_wifi_init_softap(char *ap_ssid, char *ap_pass);
 esp_err_t prv_wifi_init_sta(char *sta_ssid, char *sta_pass);
 /*
 *   @brief  register provision handlers ( web page & ws handlers) on existing  httpd server with ws support
-*           uri page -> DEFAULT_URI
+*           uri page -> CONFIG_DEFAULT_URI
 *   @param  httpd_handle_t server -> existing server handle
 *   @return
 *           ESP_OK      -> register OK
@@ -61,7 +55,7 @@ typedef esp_err_t (*prv_wifi_connect_register_uri_handler)(httpd_handle_t server
 
 /*
 *   @brief  start provision httpd server, uri web page read existing nvs wifi data  & write new nvs wifi data ( ap/sta mode, wifi ssid/pass )
-*           uri page -> DEFAULT_URI
+*           uri page -> CONFIG_DEFAULT_URI
 *   @param int restart_mode
 *           PRV_MODE_STAY_ACTIVE   -> write nvs wifi data and stay active connection
 *           PRV_MODE_STOP_SERVER   -> stop httpd after write new nvs wifi data

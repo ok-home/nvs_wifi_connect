@@ -11,4 +11,4 @@
  - Первое подключение через softAP
  - Последующие подключения - по данным записанным в NVS
  - Интерфейс -> prv_wifi_connect.h
- - Пример  -> prv_example_connect.c
+ - Пример  -> example_prv_wifi_connect.c
