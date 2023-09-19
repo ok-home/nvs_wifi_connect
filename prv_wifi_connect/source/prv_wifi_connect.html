@@ -66,6 +66,11 @@
 <body>
     <div class="hdr">WiFi CONNECT</div>
 
+    <div class="column">
+        <button class="btn" id="goHome" >На главную</button>
+    </div>
+
+
     <div class="cl1">
         <label class="cl01" for="nvsApStaMode">Connect mode</label>
         <select class="cl02" id="nvsApStaMode">
@@ -123,6 +128,11 @@
         document.getElementById("Wifi_Upload").addEventListener("click", function (e) {
             send_wifi_data();
             socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "write" }));
+        });
+        document.getElementById("goHome").addEventListener("click", function (e) {
+            //onclick="window.location.href = '/'"
+            socket.close();
+            window.location.href = '/';
         });
 
         function send_wifi_data() {
