@@ -1,4 +1,4 @@
-menu "Example Configuration"
+menu "NVS WIFI Connect"
 
     config DEFAULT_URI
         string "Connect page URI"

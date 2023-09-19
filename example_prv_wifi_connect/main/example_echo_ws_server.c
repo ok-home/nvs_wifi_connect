@@ -11,13 +11,15 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include <esp_system.h>
-#include <nvs_flash.h>
+//#include <nvs_flash.h>
 #include <sys/param.h>
 #include "esp_netif.h"
-#include "esp_eth.h"
-#include "protocol_examples_common.h"
+//#include "esp_eth.h"
+//#include "protocol_examples_common.h"
 
 #include <esp_http_server.h>
+
+#include "prv_wifi_connect.h"
 
 /* A simple example that demonstrates using websocket echo server
  */
@@ -72,7 +74,7 @@ static esp_err_t echo_handler(httpd_req_t *req)
     return ret;
 }
 
-static const httpd_uri_t ws = {
+static const httpd_uri_t ews = {
         .uri        = "/ws",
         .method     = HTTP_GET,
         .handler    = echo_handler,
@@ -90,7 +92,7 @@ static esp_err_t get_handler(httpd_req_t *req)
     httpd_resp_sendstr_chunk(req, NULL);
     return ESP_OK;
 }
-static const httpd_uri_t gh = {
+static const httpd_uri_t egh = {
     .uri = "/",
     .method = HTTP_GET,
     .handler = get_handler,
@@ -108,7 +110,8 @@ static httpd_handle_t start_webserver(void)
     if (httpd_start(&server, &config) == ESP_OK) {
         // Registering the ws handler
         ESP_LOGI(TAG, "Registering URI handlers");
-        example_register_uri_handler(httpd_handle_t server);
+        example_register_uri_handler(server);
+        prv_register_uri_handler(server);
         return server;
     }
 
@@ -163,10 +166,10 @@ void example_echo_ws_server(void)
 esp_err_t example_register_uri_handler(httpd_handle_t server)
 {
     esp_err_t ret = ESP_OK;
-    ret = httpd_register_uri_handler(server, &gh);
+    ret = httpd_register_uri_handler(server, &egh);
     if (ret)
         goto _ret;
-    ret = httpd_register_uri_handler(server, &ws);
+    ret = httpd_register_uri_handler(server, &ews);
     if (ret)
         goto _ret;
 _ret:

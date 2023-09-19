@@ -7,7 +7,8 @@ esp_err_t example_register_uri_handler(httpd_handle_t server);
 
 void app_main(void)
 {
-    prv_wifi_connect();                     // return with error
-    prv_start_http_server(PRV_MODE_STAY_ACTIVE, NULL); // run server
-    example_echo_ws_server();
+    prv_wifi_connect();                     // return with error ?
+    prv_start_http_server(PRV_MODE_STAY_ACTIVE,example_register_uri_handler); // run server
+    //example_echo_ws_server();
+
 }
