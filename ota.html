@@ -132,10 +132,10 @@
                 receiveWsData(JSON.stringify({ name: "otaSetchunksSize", msg: 4096 }));
                 while (otaStartsegment + otaSetchunksSize <= otaData.length) {
                     receiveWsData(JSON.stringify({ name: "otaGetChunk", msg: otaStartsegment }));
-                    console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
+                    //console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
                     otaStartsegment += otaSetchunksSize;
                 }
-                console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
+                //console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
                 receiveWsData(JSON.stringify({ name: "otaGetChunk", msg: otaStartsegment }));
                 receiveWsData(JSON.stringify({ name: "otaEnd", msg: "OK" }));
             }
@@ -149,10 +149,9 @@
                             otaSetchunksSize = obj.msg;
                             break;
                         case "otaGetChunk":
-                            console.log(obj.msg);
                             let otaDataSend= otaData.subarray(obj.msg,obj.msg+otaSetchunksSize);
                             document.getElementById("otaPogress").value = obj.msg;
-                            console.log(xxx.length); 
+                            console.log("sock send "+obj.msg+" "+otaDataSend.length); 
                             //socket.send(otaDataSend);
                             break;
                         case "otaEnd" :
