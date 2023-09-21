@@ -81,13 +81,15 @@
         <div id="otaProgressVisible" style="display:none">
             <div class="cl1">
                 <label class="cl01" for="otaPogress">Ota Progress</label>
-                <progress class="cl02" id="otaPogress" max = 100 value = 0>
+                <progress class="cl02" id="otaPogress" max=100 value=0>
             </div>
         </div>
 
         <script>
             let reader = new FileReader();
-            let otaData ;
+            let otaData;
+            let otaChunkSize = 0;
+            let otaStartsegment = 0;
 
             function readOtaFile(input) {
                 let file = input.files[0];
@@ -95,7 +97,7 @@
                 reader.readAsArrayBuffer(file);
 
                 reader.onload = function () {
-                    otaData = new Uint8Array(reader.result); 
+                    otaData = new Uint8Array(reader.result);
                     console.log(reader.result);
                     console.log(otaData.length);
                     document.getElementById("otaStartVisible").style.display = "block";
@@ -109,13 +111,13 @@
         </script>
         <script>/*WIFI обновление*/
             document.getElementById("OtaStartCancel").addEventListener("click", function (e) {
-                if(otaData.length > 0)
-                {
-                //socket.send(JSON.stringify({ name: "otasize", msg: otaData.length }));
-                console.log(JSON.stringify({ name: "otasize", msg: otaData.length }));
-                this.innerHTML="Ota Cancel";
-                document.getElementById("otaProgressVisible").style.display = "block";
-                document.getElementById("otaPogress").max = otaData.length;
+                if (otaData.length > 0) {
+                    //socket.send(JSON.stringify({ name: "otasize", msg: otaData.length }));
+                    console.log(JSON.stringify({ name: "otasize", msg: otaData.length }));
+                    this.innerHTML = "Ota Cancel";
+                    document.getElementById("otaProgressVisible").style.display = "block";
+                    document.getElementById("otaPogress").max = otaData.length;
+                    tstReceive();
                 }
 
             });
@@ -125,12 +127,31 @@
                 window.location.href = '/';
             });
 
+            function tstReceive() {
+                receiveWsData(JSON.stringify({ name: "otachunk", msg: 4096 }));
+                while (otaStartsegment + otaChunkSize <= otaData.length) {
+                    receiveWsData(JSON.stringify({ name: "otagetchunk", msg: otaStartsegment }));
+                    console.log(otaStartsegment + " " + otaChunkSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
+                    otaStartsegment += otaChunkSize;
+                }
+                console.log(otaStartsegment + " " + otaChunkSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
+                receiveWsData(JSON.stringify({ name: "otagetchunk", msg: otaStartsegment }));
+                receiveWsData(JSON.stringify({ name: "otaend", msg: "OK" }));
+            }
+
             function receiveWsData(data) {
                 try {
                     let obj = JSON.parse(data);
-                    document.getElementById(obj.name).value = obj.msg;
-                    if (obj.name == "nvsApStaMode") {
-                        document.getElementById(obj.name).dispatchEvent(new Event('input'));
+                    console.log(data);
+                    switch (obj.name) {
+                        case "otachunk":
+                            otaChunkSize = obj.msg;
+                            break;
+                        case "otagetchunk":
+                            console.log(obj.msg);
+                            let xxx = otaData.subarray(obj.msg,obj.msg+otaChunkSize);
+                            console.log(xxx);
+                            break;
                     }
                 }
                 catch
