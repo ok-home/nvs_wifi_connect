@@ -76,7 +76,7 @@
             <input class="cl02" type="file" id="otaFile" placeholder="select file" onchange="readOtaFile(this)">
         </div>
         <div class="column" style="display:none" id="otaStartVisible">
-            <button class="btn" id="OtaStartCancel">Ota Start</button>
+            <button class="btn" id="otaStartCancel">Ota Start</button>
         </div>
         <div id="otaProgressVisible" style="display:none">
             <div class="cl1">
@@ -88,7 +88,7 @@
         <script>
             let reader = new FileReader();
             let otaData;
-            let otaChunkSize = 0;
+            let otaSetchunksSize = 0;
             let otaStartsegment = 0;
 
             function readOtaFile(input) {
@@ -101,6 +101,7 @@
                     console.log(reader.result);
                     console.log(otaData.length);
                     document.getElementById("otaStartVisible").style.display = "block";
+                    document.getElementById("otaProgressVisible").style.display = "none";
                 };
 
                 reader.onerror = function () {
@@ -110,7 +111,7 @@
             }
         </script>
         <script>/*WIFI обновление*/
-            document.getElementById("OtaStartCancel").addEventListener("click", function (e) {
+            document.getElementById("otaStartCancel").addEventListener("click", function (e) {
                 if (otaData.length > 0) {
                     //socket.send(JSON.stringify({ name: "otasize", msg: otaData.length }));
                     console.log(JSON.stringify({ name: "otasize", msg: otaData.length }));
@@ -128,15 +129,15 @@
             });
 
             function tstReceive() {
-                receiveWsData(JSON.stringify({ name: "otachunk", msg: 4096 }));
-                while (otaStartsegment + otaChunkSize <= otaData.length) {
-                    receiveWsData(JSON.stringify({ name: "otagetchunk", msg: otaStartsegment }));
-                    console.log(otaStartsegment + " " + otaChunkSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
-                    otaStartsegment += otaChunkSize;
+                receiveWsData(JSON.stringify({ name: "otaSetchunksSize", msg: 4096 }));
+                while (otaStartsegment + otaSetchunksSize <= otaData.length) {
+                    receiveWsData(JSON.stringify({ name: "otaGetChunk", msg: otaStartsegment }));
+                    console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
+                    otaStartsegment += otaSetchunksSize;
                 }
-                console.log(otaStartsegment + " " + otaChunkSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
-                receiveWsData(JSON.stringify({ name: "otagetchunk", msg: otaStartsegment }));
-                receiveWsData(JSON.stringify({ name: "otaend", msg: "OK" }));
+                console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
+                receiveWsData(JSON.stringify({ name: "otaGetChunk", msg: otaStartsegment }));
+                receiveWsData(JSON.stringify({ name: "otaEnd", msg: "OK" }));
             }
 
             function receiveWsData(data) {
@@ -144,14 +145,21 @@
                     let obj = JSON.parse(data);
                     console.log(data);
                     switch (obj.name) {
-                        case "otachunk":
-                            otaChunkSize = obj.msg;
+                        case "otaSetchunksSize":
+                            otaSetchunksSize = obj.msg;
                             break;
-                        case "otagetchunk":
+                        case "otaGetChunk":
                             console.log(obj.msg);
-                            let xxx = otaData.subarray(obj.msg,obj.msg+otaChunkSize);
-                            console.log(xxx);
+                            let otaDataSend= otaData.subarray(obj.msg,obj.msg+otaSetchunksSize);
+                            document.getElementById("otaPogress").value = obj.msg;
+                            console.log(xxx.length); 
+                            //socket.send(otaDataSend);
                             break;
+                        case "otaEnd" :
+                            document.getElementById("otaStartVisible").style.display = "none";
+                            document.getElementById("otaStartCancel").innerHTML="Ota Start";
+                            document.getElementById("otaPogress").value = otaData.length;
+                            otaStartsegment = 0;
                     }
                 }
                 catch
@@ -169,6 +177,7 @@
             let wsHostStr = "ws://" + document.location.host + document.location.pathname;
             wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
             var socket = new WebSocket(wsHostStr);
+            socket.binaryType = "arraybuffer";
         </script>
 
         <script> // события WS
