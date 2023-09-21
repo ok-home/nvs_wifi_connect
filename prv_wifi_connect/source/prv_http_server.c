@@ -98,7 +98,7 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
     }
     else
     {
-        if (strncmp(key, NVS_WIFI_RESTART_KEY, strlen(NVS_WIFI_RESTART_KEY)) != 0) // key/value -> wifi data
+        if (strncmp(key, NVS_COMPARE_KEY_PARAM, strlen(NVS_COMPARE_KEY_PARAM)) == 0  ) // key/value -> wifi data
         {
             if (nvs_set_str(nvs_handle, key, value)) // write key/value to nvs
             {
@@ -107,7 +107,7 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
             nvs_commit(nvs_handle);
             nvs_close(nvs_handle);
         }
-        else // key/value ->  restart or write
+        else if (strncmp(key, NVS_WIFI_RESTART_KEY, strlen(NVS_WIFI_RESTART_KEY)) == 0)// key/value ->  restart or write
         {
             nvs_close(nvs_handle);
             ESP_LOGI(TAG, "restart key %s value %s", key, value);
@@ -269,7 +269,6 @@ static void full_stop_httpd_server(void *arg, esp_event_base_t event_base,
         }
     }
 }
-
 esp_err_t prv_register_uri_handler(httpd_handle_t server)
 {
     esp_err_t ret = ESP_OK;

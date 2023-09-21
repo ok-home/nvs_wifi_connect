@@ -15,6 +15,7 @@
 #define STA_ESP_MAXIMUM_RETRY 5
 
 // web page id & nvs key
+#define NVS_COMPARE_KEY_PARAM "nvs"
 #define NVS_AP_ESP_WIFI_SSID_KEY "nvsApSsid"
 #define NVS_AP_ESP_WIFI_PASS_KEY "nvsApPass"
 #define NVS_STA_ESP_WIFI_SSID_KEY "nvsStaSsid"
