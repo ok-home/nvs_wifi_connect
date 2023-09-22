@@ -69,130 +69,171 @@
     <div class="column">
         <button class="btn" id="goHome">На главную</button>
     </div>
+    <div class="cl1" style="display:none">
+        <label class="cl01" for="otaFile">Ota File Name</label>
+        <input class="cl02" type="file" id="otaFile" placeholder="select file" onchange="readOtaFile(this)">
+    </div>
+    <div class="column" style="display:block" id="otaFileSelectVisible">
+        <button class="btn" id="otaFileSelect" onclick="document.getElementById('otaFile').click()">File Select</button>
+    </div>
 
-    <div id="otaFileDiv" style="display:block">
+    <div class="column" style="display:none" id="otaStartVisible">
+        <button class="btn" id="otaStartCancel">Ota Start</button>
+    </div>
+    <div class="column" style="display:none" id="otaReStartVisible">
+        <button class="btn" id="otaReStart">Ota ReStart</button>
+    </div>
+    <div id="otaProgressVisible" style="display:none">
         <div class="cl1">
-            <label class="cl01" for="otaFile">Ota File Name</label>
-            <input class="cl02" type="file" id="otaFile" placeholder="select file" onchange="readOtaFile(this)">
+            <progress class="cl02" id="otaPogress" max=100 value=0>
         </div>
-        <div class="column" style="display:none" id="otaStartVisible">
-            <button class="btn" id="otaStartCancel">Ota Start</button>
-        </div>
-        <div id="otaProgressVisible" style="display:none">
-            <div class="cl1">
-                <label class="cl01" for="otaPogress">Ota Progress</label>
-                <progress class="cl02" id="otaPogress" max=100 value=0>
-            </div>
-        </div>
+    </div>
 
-        <script>
+    <script>
+        
+        let otaData;
+        let otaSetchunksSize = 0;
+        let otaStartsegment = 0;
+        let otaStarted = 0;
+
+        function readOtaFile(input) {
             let reader = new FileReader();
-            let otaData;
-            let otaSetchunksSize = 0;
-            let otaStartsegment = 0;
+            let file = input.files[0];
+            document.getElementById('otaFileSelect').innerHTML = "Selected file: " + file.name;
+            reader.readAsArrayBuffer(file);
 
-            function readOtaFile(input) {
-                let file = input.files[0];
+            console.log("state "+reader.readyState);
 
-                reader.readAsArrayBuffer(file);
+            reader.onload = function () {
+                otaData = new Uint8Array(reader.result);
+                console.log(reader.result);
+                console.log(otaData.length);
+                document.getElementById("otaStartVisible").style.display = "block";
+                document.getElementById("otaProgressVisible").style.display = "none";
+                document.getElementById("otaReStartVisible").style.display = "none";
+            };
 
-                reader.onload = function () {
-                    otaData = new Uint8Array(reader.result);
-                    console.log(reader.result);
-                    console.log(otaData.length);
-                    document.getElementById("otaStartVisible").style.display = "block";
-                    document.getElementById("otaProgressVisible").style.display = "none";
-                };
-
-                reader.onerror = function () {
-                    console.log(reader.error);
-                };
-
+            reader.onerror = function () {
+                console.log(reader.error);
+            };
+            reader.loadend = function () {
+                console.log("loadend "+ reader.error);
             }
-        </script>
-        <script>/*WIFI обновление*/
-            document.getElementById("otaStartCancel").addEventListener("click", function (e) {
-                if (otaData.length > 0) {
-                    //socket.send(JSON.stringify({ name: "otasize", msg: otaData.length }));
-                    console.log(JSON.stringify({ name: "otasize", msg: otaData.length }));
-                    this.innerHTML = "Ota Cancel";
-                    document.getElementById("otaProgressVisible").style.display = "block";
-                    document.getElementById("otaPogress").max = otaData.length;
-                    tstReceive();
-                }
+        }
+    </script>
+    <script>/*WIFI обновление*/
+        document.getElementById("otaStartCancel").addEventListener("click", function (e) {
+            if (otaData.length > 0 && otaStarted == 0) {
+                //socket.send(JSON.stringify({ name: "otasize", msg: otaData.length }));
+                console.log(JSON.stringify({ name: "otasize", msg: otaData.length }));
+                otaStarted = 1;
+                this.innerHTML = "Click to Cancel";
+                document.getElementById("otaFileSelect").disabled = true;
+                document.getElementById("otaProgressVisible").style.display = "block";
+                document.getElementById("otaPogress").max = otaData.length;
+                tstReceive();
+            }
+            else {
+                otaStarted = 0;
+                receiveWsData(JSON.stringify({ name: "otaCancel", msg: "Cancel" }));
+            }
 
-            });
-            document.getElementById("goHome").addEventListener("click", function (e) {
-                //onclick="window.location.href = '/'"
-                socket.close();
-                window.location.href = '/';
-            });
-
-            function tstReceive() {
-                receiveWsData(JSON.stringify({ name: "otaSetchunksSize", msg: 4096 }));
-                while (otaStartsegment + otaSetchunksSize <= otaData.length) {
-                    receiveWsData(JSON.stringify({ name: "otaGetChunk", msg: otaStartsegment }));
-                    //console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
-                    otaStartsegment += otaSetchunksSize;
+        });
+        document.getElementById("goHome").addEventListener("click", function (e) {
+            //onclick="window.location.href = '/'"
+            socket.close();
+            window.location.href = '/';
+        });
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        async function tstReceive() {
+            receiveWsData(JSON.stringify({ name: "otaSetchunksSize", msg: 1024 }));
+            while (otaStartsegment + otaSetchunksSize <= otaData.length && otaStarted == 1) {
+                await sleep(1000);
+                if(otaStarted == 1){
+                receiveWsData(JSON.stringify({ name: "otaGetChunk", msg: otaStartsegment }));
                 }
-                //console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
+                otaStartsegment += otaSetchunksSize;
+            }
+            //console.log(otaStartsegment + " " + otaSetchunksSize + " " + otaData.length + " " + (otaData.length - otaStartsegment));
+            if (otaStarted == 1) {
                 receiveWsData(JSON.stringify({ name: "otaGetChunk", msg: otaStartsegment }));
                 receiveWsData(JSON.stringify({ name: "otaEnd", msg: "OK" }));
             }
+        }
 
-            function receiveWsData(data) {
-                try {
-                    let obj = JSON.parse(data);
-                    console.log(data);
-                    switch (obj.name) {
-                        case "otaSetchunksSize":
-                            otaSetchunksSize = obj.msg;
-                            break;
-                        case "otaGetChunk":
-                            let otaDataSend= otaData.subarray(obj.msg,obj.msg+otaSetchunksSize);
-                            document.getElementById("otaPogress").value = obj.msg;
-                            console.log("sock send "+obj.msg+" "+otaDataSend.length); 
-                            //socket.send(otaDataSend);
-                            break;
-                        case "otaEnd" :
-                            document.getElementById("otaStartVisible").style.display = "none";
-                            document.getElementById("otaStartCancel").innerHTML="Ota Start";
-                            document.getElementById("otaPogress").value = otaData.length;
-                            otaStartsegment = 0;
-                    }
+        function receiveWsData(data) {
+            try {
+                let obj = JSON.parse(data);
+                console.log(data);
+                switch (obj.name) {
+                    case "otaSetchunksSize":
+                        otaSetchunksSize = obj.msg;
+                        break;
+                    case "otaGetChunk":
+                        let otaDataSend = otaData.subarray(obj.msg, obj.msg + otaSetchunksSize);
+                        document.getElementById("otaPogress").value = obj.msg;
+                        document.getElementById("otaStartCancel").innerHTML = "Ota Transfer. Size = " + otaData.length + " Segment = " + obj.msg + " Click to Cancel";
+                        console.log("sock send " + obj.msg + " " + otaDataSend.length);
+                        //socket.send(otaDataSend);
+                        break;
+                    case "otaEnd":
+                        otaStartsegment = 0;
+                        otaStarted = 0;
+                        document.getElementById("otaStartVisible").style.display = "none";
+                        document.getElementById("otaStartCancel").innerHTML = "Ota Start";
+                        document.getElementById("otaPogress").value = otaData.length;
+                        document.getElementById("otaFileSelect").disabled = false;
+                        document.getElementById("otaReStartVisible").style.display = "block";
+                        document.getElementById("otaReStart").innerHTML = "Transfer Done Click to restart ESP";
+                        document.getElementById("otaReStart").disabled = false;
+                        break;
+                    case "otaError":
+                    case "otaCancel":
+                        otaStartsegment = 0;
+                        otaStarted = 0;
+                        document.getElementById("otaStartVisible").style.display = "none";
+                        document.getElementById("otaStartCancel").innerHTML = "Ota Start";
+                        document.getElementById("otaPogress").value = otaData.length;
+                        document.getElementById("otaFileSelect").disabled = false;
+                        document.getElementById("otaReStartVisible").style.display = "block";
+                        document.getElementById("otaReStart").innerHTML = "Transfer Cancel " + obj.msg;
+                        document.getElementById("otaReStart").disabled = true;
                 }
-                catch
-                {
-                    console.log(data + " catch");
-                }
-            };
-        </script>
+            }
+            catch
+            {
+                console.log(data + " catch");
+            }
+        };
+    </script>
 
-        <script>  // Прием, обработка и отправка данных в WS
-        </script>
+    <script>  // Прием, обработка и отправка данных в WS
+    </script>
 
-        <script> // основной старт скрипта, открыть сокет
-            // создать сокет по адресу
-            let wsHostStr = "ws://" + document.location.host + document.location.pathname;
-            wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
-            var socket = new WebSocket(wsHostStr);
-            socket.binaryType = "arraybuffer";
-        </script>
+    <script> // основной старт скрипта, открыть сокет
+        // создать сокет по адресу
+        let wsHostStr = "ws://" + document.location.host + document.location.pathname;
+        wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
+        var socket = new WebSocket(wsHostStr);
+        socket.binaryType = "arraybuffer";
+    </script>
 
-        <script> // события WS
-            socket.onopen = function () {
-                console.log("connect");
-            };
-            socket.onclose = function (event) {
-                console.log("close");
-            };
-            socket.onerror = function () {
-                console.log("error");
-            };
-            socket.onmessage = function (event) {
-                receiveWsData(event.data);
-            };
-        </script>
+    <script> // события WS
+        socket.onopen = function () {
+            console.log("connect");
+        };
+        socket.onclose = function (event) {
+            console.log("close");
+        };
+        socket.onerror = function () {
+            console.log("error");
+        };
+        socket.onmessage = function (event) {
+            receiveWsData(event.data);
+        };
+    </script>
 
 </body>
 
