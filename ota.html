@@ -101,13 +101,12 @@
             let file = input.files[0];
             document.getElementById('otaFileSelect').innerHTML = "Selected file: " + file.name;
             reader.readAsArrayBuffer(file);
-
-            console.log("state "+reader.readyState);
+            input.value = null;
 
             reader.onload = function () {
                 otaData = new Uint8Array(reader.result);
-                console.log(reader.result);
-                console.log(otaData.length);
+//                console.log(reader.result);
+//                console.log(otaData.length);
                 document.getElementById("otaStartVisible").style.display = "block";
                 document.getElementById("otaProgressVisible").style.display = "none";
                 document.getElementById("otaReStartVisible").style.display = "none";
@@ -116,16 +115,15 @@
             reader.onerror = function () {
                 console.log(reader.error);
             };
-            reader.loadend = function () {
-                console.log("loadend "+ reader.error);
-            }
         }
     </script>
     <script>/*WIFI обновление*/
         document.getElementById("otaStartCancel").addEventListener("click", function (e) {
             if (otaData.length > 0 && otaStarted == 0) {
+
                 //socket.send(JSON.stringify({ name: "otasize", msg: otaData.length }));
                 console.log(JSON.stringify({ name: "otasize", msg: otaData.length }));
+                
                 otaStarted = 1;
                 this.innerHTML = "Click to Cancel";
                 document.getElementById("otaFileSelect").disabled = true;
@@ -144,6 +142,12 @@
             socket.close();
             window.location.href = '/';
         });
+        document.getElementById("otaReStart").addEventListener("click", function (e) {
+            //socket.send(JSON.stringify({ name: "otarestartesp", msg: "restart" }));
+            console.log(JSON.stringify({ name: "otarestartesp", msg: "restart" }));
+        });
+
+        //
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
         }
@@ -162,7 +166,7 @@
                 receiveWsData(JSON.stringify({ name: "otaEnd", msg: "OK" }));
             }
         }
-
+        //
         function receiveWsData(data) {
             try {
                 let obj = JSON.parse(data);
