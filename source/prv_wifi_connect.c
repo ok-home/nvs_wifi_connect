@@ -211,7 +211,7 @@ esp_err_t prv_wifi_connect(void)
     }
     else 
     {
-        if(strncmp(NVS_WIFI_MODE_STA,nvs_mode,strlen(NVS_WIFI_MODE_STA)) == 0) // sta
+        if(strncmp(NVS_WIFI_MODE_STA,nvs_mode,sizeof(NVS_WIFI_MODE_STA)) == 0) // sta
         {
             if((nvs_get_key_value_str(NVS_STA_ESP_WIFI_SSID_KEY, nvs_ssid) || nvs_get_key_value_str(NVS_STA_ESP_WIFI_PASS_KEY, nvs_password)) == ESP_OK)
             {

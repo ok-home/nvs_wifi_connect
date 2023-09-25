@@ -98,7 +98,7 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
     }
     else
     {
-        if (strncmp(key, NVS_COMPARE_KEY_PARAM, strlen(NVS_COMPARE_KEY_PARAM)) == 0  ) // key/value -> wifi data
+        if (strncmp(key, NVS_COMPARE_KEY_PARAM, sizeof(NVS_COMPARE_KEY_PARAM)) == 0  ) // key/value -> wifi data
         {
             if (nvs_set_str(nvs_handle, key, value)) // write key/value to nvs
             {
@@ -107,7 +107,7 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
             nvs_commit(nvs_handle);
             nvs_close(nvs_handle);
         }
-        else if (strncmp(key, NVS_WIFI_RESTART_KEY, strlen(NVS_WIFI_RESTART_KEY)) == 0)// key/value ->  restart or write
+        else if (strncmp(key, NVS_WIFI_RESTART_KEY, sizeof(NVS_WIFI_RESTART_KEY)) == 0)// key/value ->  restart or write
         {
             nvs_close(nvs_handle);
             ESP_LOGI(TAG, "restart key %s value %s", key, value);
@@ -115,7 +115,7 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
             // if srv_restart == PRV_MODE_STAY_ACTIVE -> no operation
             // if srv_restart == PRV_MODE_STOP_SERVER -> stop httpd
             // if srv_restart == PRV_MODE_RESTART_ESP32 -> full restart esp32 regardless of value NVS_WIFI_RESTART_VALUE_RESTART
-            if (srv_restart == PRV_MODE_RESTART_ESP32 || strncmp(value, NVS_WIFI_RESTART_VALUE_RESTART, strlen(NVS_WIFI_RESTART_VALUE_RESTART)) == 0)
+            if (srv_restart == PRV_MODE_RESTART_ESP32 || strncmp(value, NVS_WIFI_RESTART_VALUE_RESTART, sizeof(NVS_WIFI_RESTART_VALUE_RESTART)) == 0)
             {
                 esp_restart();
             }
