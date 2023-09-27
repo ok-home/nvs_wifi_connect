@@ -16,7 +16,7 @@ enum
 };
 
 static int srv_restart = 0;
-static nvs_wifi_connect_register_uri_handler srv_register_uri_handler;
+static nvs_wifi_connect_register_uri_handler_t srv_register_uri_handler;
 
 // simple json parse -> only one parametr name/val
 static esp_err_t json_to_str_parm(char *jsonstr, char *nameStr, char *valStr) // распаковать строку json в пару  name/val
@@ -110,7 +110,6 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
         else if (strncmp(key, NVS_WIFI_RESTART_KEY, sizeof(NVS_WIFI_RESTART_KEY)) == 0)// key/value ->  restart or write
         {
             nvs_close(nvs_handle);
-            ESP_LOGI(TAG, "restart key %s value %s", key, value);
             // if value == NVS_WIFI_RESTART_VALUE_RESTART -> full restart esp32 regardless of value srv_restart
             // if srv_restart == NVS_WIFI_CONNECT_MODE_STAY_ACTIVE -> no operation
             // if srv_restart == NVS_WIFI_CONNECT_MODE_STOP_SERVER -> stop httpd
@@ -223,11 +222,9 @@ static void disconnect_handler(void *arg, esp_event_base_t event_base,
     httpd_handle_t *server = (httpd_handle_t *)arg;
     if (*server)
     {
-        ESP_LOGI(TAG, "Stopping webserver");
         if (stop_webserver(*server) == ESP_OK)
         {
             *server = NULL;
-            ESP_LOGI(TAG, "Stopping webserver OK");
         }
         else
         {
@@ -251,7 +248,6 @@ static void full_stop_httpd_server(void *arg, esp_event_base_t event_base,
     httpd_handle_t *server = (httpd_handle_t *)arg;
     if (*server)
     {
-        // ESP_LOGI(TAG, "Stopping webserver");
         if (stop_webserver(*server) == ESP_OK)
         {
             *server = NULL;
@@ -275,13 +271,13 @@ esp_err_t nvs_wifi_connect_register_uri_handler(httpd_handle_t server)
     ret = httpd_register_uri_handler(server, &nvs_wifi_connect_gh);
     if (ret)
         goto _ret;
-    ret = httpd_register_uri_handler(server, &nvs_vifi_connect_ws);
+    ret = httpd_register_uri_handler(server, &nvs_wifi_connect_ws);
     if (ret)
         goto _ret;
 _ret:
     return ret;
 }
-httpd_handle_t nvs_wifi_connect_start_http_server(int restart, nvs_wifi_connect_register_uri_handler register_uri_handler)
+httpd_handle_t nvs_wifi_connect_start_http_server(int restart, nvs_wifi_connect_register_uri_handler_t register_uri_handler)
 {
     static httpd_handle_t server = NULL;
     srv_restart = restart;

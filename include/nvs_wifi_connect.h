@@ -51,7 +51,7 @@ esp_err_t nvs_wifi_connect_register_uri_handler(httpd_handle_t server);
 /*
 *   @brief handle for connecting to the nvs_wifi_connect_http_server server
 */
-typedef esp_err_t (*nvs_wifi_connect_register_uri_handler)(httpd_handle_t server);
+typedef esp_err_t (*nvs_wifi_connect_register_uri_handler_t)(httpd_handle_t server);
 
 /*
 *   @brief  start nvs_wifi_connect httpd server, uri web page read existing nvs wifi data  & write new nvs wifi data ( ap/sta mode, wifi ssid/pass )
@@ -60,13 +60,13 @@ typedef esp_err_t (*nvs_wifi_connect_register_uri_handler)(httpd_handle_t server
 *           NVS_WIFI_CONNECT_MODE_STAY_ACTIVE   -> write nvs wifi data and stay active connection
 *           NVS_WIFI_CONNECT_MODE_STOP_SERVER   -> stop httpd after write new nvs wifi data
 *           NVS_WIFI_CONNECT_MODE_RESTART_ESP32 -> full restart esp32 regardless of value NVS_WIFI_RESTART_VALUE_RESTART
-*   @param  nvs_wifi_connect_register_uri_handler register_uri_handle
+*   @param  nvs_wifi_connect_register_uri_handler_t register_uri_handle
 *           connect other uri handlers with started httpd server
 *   @return  
 *           httpd_handle_t server -> server handle on OK start
 *           NULL                  -> server start FAIL
 */
-httpd_handle_t nvs_wifi_connect_start_http_server(int restart_mode , nvs_wifi_connect_register_uri_handler register_uri_handler);
+httpd_handle_t nvs_wifi_connect_start_http_server(int restart_mode , nvs_wifi_connect_register_uri_handler_t register_uri_handler);
 
 #ifdef __cplusplus
 }

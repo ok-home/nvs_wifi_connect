@@ -16,7 +16,7 @@
  - Последующие подключения - по данным записанным в NVS
  - Интерфейс -> nvs_wifi_connect.h
     - esp_err_t nvs_wifi_connect(void); - подключение к WiFi по сохраненным в NVS параметрам, возвращает ошибку если подключение не удалось и создает SoftAP дефолтными или сохраненными в NVS параметрами SoftAP
-    - httpd_handle_t nvs_wifi_connect_start_http_server(int restart_mode , nvs_wifi_connect_register_uri_handler register_uri_handler); - запускает веб- сервер с страницей настройки параметров WiFi, возвращает хэндл сервера или NULL если не удалось создать веб-сервер.
+    - httpd_handle_t nvs_wifi_connect_start_http_server(int restart_mode , nvs_wifi_connect_register_uri_handler_t register_uri_handler); - запускает веб- сервер с страницей настройки параметров WiFi, возвращает хэндл сервера или NULL если не удалось создать веб-сервер.
       - int restart_mode - режим работы сервера
         - NVS_WIFI_CONNECT_MODE_STAY_ACTIVE - сервер остается активным после сохранения параметров в NVS, в этом режиме вебсервер можно использовать как основной сервер программы подключив свои обработчики
         - NVS_WIFI_CONNECT_MODE_STOP_SERVER - сервер будет остановлен после сохранения параметров в NVS, можно стартовать при необходимости свой веб-сервер, ESP32 не будет перезагружена

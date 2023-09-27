@@ -53,7 +53,7 @@ static void wifi_event_handler_ap(void* arg, esp_event_base_t event_base,
     }
 }
 
-static void nvs_wifi_connect_init_softap(char *ap_ssid, char *ap_pass)
+static void init_softap(char *ap_ssid, char *ap_pass)
 {
     //ESP_ERROR_CHECK(esp_netif_init());
     //ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -90,7 +90,7 @@ static void nvs_wifi_connect_init_softap(char *ap_ssid, char *ap_pass)
              ap_ssid, ap_pass);
 }
 
-static esp_err_t nvs_wifi_connect_init_sta(char *sta_ssid, char *sta_pass )
+static esp_err_t init_sta(char *sta_ssid, char *sta_pass )
 {
     esp_err_t err = ESP_OK;
     s_wifi_event_group = xEventGroupCreate();
@@ -215,7 +215,7 @@ esp_err_t nvs_wifi_connect(void)
         {
             if((nvs_get_key_value_str(NVS_STA_ESP_WIFI_SSID_KEY, nvs_ssid) || nvs_get_key_value_str(NVS_STA_ESP_WIFI_PASS_KEY, nvs_password)) == ESP_OK)
             {
-            err = nvs_wifi_connect_init_sta(nvs_ssid,nvs_password); // ssid & pass OK
+            err = init_sta(nvs_ssid,nvs_password); // ssid & pass OK
             if(err) {ESP_LOGE(TAG,"STA ERR ssid=%s pass=%s",nvs_ssid,nvs_password);}
             }
         }
@@ -224,14 +224,14 @@ esp_err_t nvs_wifi_connect(void)
             err = nvs_get_key_value_str(NVS_AP_ESP_WIFI_SSID_KEY , nvs_ssid) || nvs_get_key_value_str(NVS_AP_ESP_WIFI_PASS_KEY , nvs_password);
             if( err == ESP_OK)
             {
-                nvs_wifi_connect_init_softap(nvs_ssid,nvs_password); // ssid & pass OK
+                init_softap(nvs_ssid,nvs_password); // ssid & pass OK
             }
             else {ESP_LOGE(TAG,"AP ERR ssid=%s pass=%s",nvs_ssid,nvs_password);}
         }
     }
     if ( err )
     {
-        nvs_wifi_connect_init_softap(CONFIG_DEFAULT_AP_ESP_WIFI_SSID,CONFIG_DEFAULT_AP_ESP_WIFI_PASS);
+        init_softap(CONFIG_DEFAULT_AP_ESP_WIFI_SSID,CONFIG_DEFAULT_AP_ESP_WIFI_PASS);
         ESP_LOGE(TAG,"ERR start default AP");
     }
     return err;
@@ -248,7 +248,7 @@ esp_err_t nvs_wifi_connect_init_sta(char *sta_ssid, char *sta_pass )
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    return nvs_wifi_connect_init_sta(sta_ssid,sta_pass );
+    return init_sta(sta_ssid,sta_pass );
 }
 void nvs_wifi_connect_init_softap(char *sta_ssid, char *sta_pass )
 {
@@ -262,5 +262,5 @@ void nvs_wifi_connect_init_softap(char *sta_ssid, char *sta_pass )
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     
-    nvs_wifi_connect_init_softap(sta_ssid,sta_pass );
+    init_softap(sta_ssid,sta_pass );
 }

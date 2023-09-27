@@ -3,7 +3,7 @@
 <html lang="ru">
 
 <head>
-    <title>WiFi connect</title>
+    <title>Example Websocket Echo Server</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <style>
@@ -64,24 +64,24 @@
 </head>
 
 <body>
-    <div class="hdr">Example echo server</div>
+    <div class="hdr">Example Websocket Echo Server</div>
     <div class="column">
-        <button class="btn" id="goHome" onclick="window.location.href = '/wifi'" >WiFI ssid/pass</button>
+        <button class="btn" id="goHome" onclick="window.location.href = '/wifi'" >Set WiFi SSID/Password</button>
     </div>
 
         <div class="cl1">
-            <label class="cl01" for="exampleSend">Wifi SSID</label>
+            <label class="cl01" for="exampleSend">Input string for Echo</label>
             <input class="cl02" type="text" id="exampleSend" placeholder="input">
         </div>
 
         <div class="cl1">
-            <label class="cl01" for="exampleEcho">Wifi Pass</label>
+            <label class="cl01" for="exampleEcho">Echo string</label>
             <input class="cl02" type="text" id="exampleEcho" placeholder="output">
         </div>
 
     <script>
         let exSend = document.getElementById("exampleSend");
-        exSend.addEventListener("blur", function (e) {
+        exSend.addEventListener("input", function (e) {
             console.log(exSend.id + " " + exSend.value  );
             socket.send(JSON.stringify({ name: exSend.id, msg: exSend.value }));
         });
