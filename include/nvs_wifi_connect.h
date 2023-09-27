@@ -39,7 +39,7 @@ void nvs_wifi_connect_init_softap(char *ap_ssid, char *ap_pass);
 */
 esp_err_t nvs_wifi_connect_init_sta(char *sta_ssid, char *sta_pass);
 /*
-*   @brief  register provision handlers ( web page & ws handlers) on existing  httpd server with ws support
+*   @brief  register nvs_wifi_connect handlers ( web page & ws handlers) on existing  httpd server with ws support
 *           uri page -> CONFIG_DEFAULT_NVS_WIFI_CONNECT_URI
 *   @param  httpd_handle_t server -> existing server handle
 *   @return
@@ -54,7 +54,7 @@ esp_err_t nvs_wifi_connect_register_uri_handler(httpd_handle_t server);
 typedef esp_err_t (*nvs_wifi_connect_register_uri_handler)(httpd_handle_t server);
 
 /*
-*   @brief  start provision httpd server, uri web page read existing nvs wifi data  & write new nvs wifi data ( ap/sta mode, wifi ssid/pass )
+*   @brief  start nvs_wifi_connect httpd server, uri web page read existing nvs wifi data  & write new nvs wifi data ( ap/sta mode, wifi ssid/pass )
 *           uri page -> CONFIG_DEFAULT_NVS_WIFI_CONNECT_URI
 *   @param int restart_mode
 *           NVS_WIFI_CONNECT_MODE_STAY_ACTIVE   -> write nvs wifi data and stay active connection
