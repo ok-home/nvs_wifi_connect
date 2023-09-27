@@ -1,6 +1,6 @@
 //#include <esp_log.h>
 
-#include "prv_wifi_connect.h"
+#include "nvs_wifi_connect.h"
 
 void example_echo_ws_server(void);
 esp_err_t example_register_uri_handler(httpd_handle_t server);
@@ -30,7 +30,7 @@ static void initialise_mdns(void)
 
 void app_main(void)
 {
-    prv_wifi_connect();                     // return with error ?
+    nvs_wifi_connect();                     // return with error ?
 
 #ifdef MDNS
     initialise_mdns();
@@ -38,6 +38,6 @@ void app_main(void)
     netbiosns_set_name("esp");
 #endif // MDNS
 
-    prv_start_http_server(PRV_MODE_STAY_ACTIVE,example_register_uri_handler); // run server
+    nvs_wifi_connect_start_http_server(NVS_WIFI_CONNECT_MODE_STAY_ACTIVE,example_register_uri_handler); // run server
     //example_echo_ws_server();
 }

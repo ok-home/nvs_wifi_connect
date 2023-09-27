@@ -10,5 +10,5 @@
   - Configuring WIFI parameters via WEB interface
   - First connection via softAP
   - Subsequent connections - according to data recorded in NVS
-  - Interface -> the prv_wifi_connect.h 
-  - Example   -> prv_example_connect.c
+  - Interface -> the nvs_wifi_connect.h 
+  - Example   -> nvs_example_connect.c

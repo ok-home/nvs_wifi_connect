@@ -3,8 +3,8 @@
 build/
 debug.log
 .gitignore
-example_prv_wifi_connect/build/
-example_prv_wifi_connect/.vscode/
-example_prv_wifi_connect/sdkconfig
-example_prv_wifi_connect/sdkconfig.old
-example_prv_wifi_connect/example_prv_wifi_connect.code-workspace
+example_nvs_wifi_connect/build/
+example_nvs_wifi_connect/.vscode/
+example_nvs_wifi_connect/sdkconfig
+example_nvs_wifi_connect/sdkconfig.old
+example_nvs_wifi_connect/example_nvs_wifi_connect.code-workspace

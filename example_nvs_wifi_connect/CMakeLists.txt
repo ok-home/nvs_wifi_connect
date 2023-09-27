@@ -7,4 +7,4 @@ list(APPEND EXTRA_COMPONENT_DIRS ../)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-project(example_prv_Wifi_Connect)
+project(example_nvs_wifi_connect)

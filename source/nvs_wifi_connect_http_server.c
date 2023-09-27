@@ -1,22 +1,22 @@
-#include "prv_wifi_connect_private.h"
-#include "prv_wifi_connect.h"
+#include "nvs_wifi_connect_private.h"
+#include "nvs_wifi_connect.h"
 
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
 #include "jsmn.h"
 
-static const char *TAG = "prv_http_server";
+static const char *TAG = "nvs_wifi_connect_http_server";
 
-ESP_EVENT_DECLARE_BASE(PRV_STOP_HTTPD);
-ESP_EVENT_DEFINE_BASE(PRV_STOP_HTTPD);
+ESP_EVENT_DECLARE_BASE(NVS_WIFI_CONNECT_STOP_HTTPD);
+ESP_EVENT_DEFINE_BASE(NVS_WIFI_CONNECT_STOP_HTTPD);
 enum
 {
-    PRV_STOP_HTTPD_EVENT
+    NVS_WIFI_CONNECT_STOP_HTTPD_EVENT
 };
 
 static int srv_restart = 0;
-static prv_wifi_connect_register_uri_handler srv_register_uri_handler;
+static nvs_wifi_connect_register_uri_handler srv_register_uri_handler;
 
 // simple json parse -> only one parametr name/val
 static esp_err_t json_to_str_parm(char *jsonstr, char *nameStr, char *valStr) // распаковать строку json в пару  name/val
@@ -112,17 +112,17 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
             nvs_close(nvs_handle);
             ESP_LOGI(TAG, "restart key %s value %s", key, value);
             // if value == NVS_WIFI_RESTART_VALUE_RESTART -> full restart esp32 regardless of value srv_restart
-            // if srv_restart == PRV_MODE_STAY_ACTIVE -> no operation
-            // if srv_restart == PRV_MODE_STOP_SERVER -> stop httpd
-            // if srv_restart == PRV_MODE_RESTART_ESP32 -> full restart esp32 regardless of value NVS_WIFI_RESTART_VALUE_RESTART
-            if (srv_restart == PRV_MODE_RESTART_ESP32 || strncmp(value, NVS_WIFI_RESTART_VALUE_RESTART, sizeof(NVS_WIFI_RESTART_VALUE_RESTART)) == 0)
+            // if srv_restart == NVS_WIFI_CONNECT_MODE_STAY_ACTIVE -> no operation
+            // if srv_restart == NVS_WIFI_CONNECT_MODE_STOP_SERVER -> stop httpd
+            // if srv_restart == NVS_WIFI_CONNECT_MODE_RESTART_ESP32 -> full restart esp32 regardless of value NVS_WIFI_RESTART_VALUE_RESTART
+            if (srv_restart == NVS_WIFI_CONNECT_MODE_RESTART_ESP32 || strncmp(value, NVS_WIFI_RESTART_VALUE_RESTART, sizeof(NVS_WIFI_RESTART_VALUE_RESTART)) == 0)
             {
                 esp_restart();
             }
-            else if (srv_restart == PRV_MODE_STOP_SERVER)
+            else if (srv_restart == NVS_WIFI_CONNECT_MODE_STOP_SERVER)
             {
                 // stop httpd server
-                ESP_ERROR_CHECK(esp_event_post(PRV_STOP_HTTPD, PRV_STOP_HTTPD_EVENT, NULL, 0, portMAX_DELAY));
+                ESP_ERROR_CHECK(esp_event_post(NVS_WIFI_CONNECT_STOP_HTTPD, NVS_WIFI_CONNECT_STOP_HTTPD_EVENT, NULL, 0, portMAX_DELAY));
             }
         }
     }
@@ -171,21 +171,21 @@ static esp_err_t ws_handler(httpd_req_t *req)
 }
 static esp_err_t get_handler(httpd_req_t *req)
 {
-    extern const unsigned char prv_wifi_connect_html_start[] asm("_binary_prv_wifi_connect_html_start");
-    extern const unsigned char prv_wifi_connect_html_end[] asm("_binary_prv_wifi_connect_html_end");
-    const size_t prv_wifi_connect_html_size = (prv_wifi_connect_html_end - prv_wifi_connect_html_start);
+    extern const unsigned char nvs_wifi_connect_html_start[] asm("_binary_nvs_wifi_connect_html_start");
+    extern const unsigned char nvs_wifi_connect_html_end[] asm("_binary_nvs_wifi_connect_html_end");
+    const size_t nvs_wifi_connect_html_size = (nvs_wifi_connect_html_end - nvs_wifi_connect_html_start);
 
-    httpd_resp_send_chunk(req, (const char *)prv_wifi_connect_html_start, prv_wifi_connect_html_size);
+    httpd_resp_send_chunk(req, (const char *)nvs_wifi_connect_html_start, nvs_wifi_connect_html_size);
     httpd_resp_sendstr_chunk(req, NULL);
     return ESP_OK;
 }
-static const httpd_uri_t gh = {
-    .uri = CONFIG_DEFAULT_URI,
+static const httpd_uri_t nvs_wifi_connect_gh = {
+    .uri = CONFIG_DEFAULT_NVS_WIFI_CONNECT_URI,
     .method = HTTP_GET,
     .handler = get_handler,
     .user_ctx = NULL};
-static const httpd_uri_t ws = {
-    .uri = CONFIG_DEFAULT_WS_URI,
+static const httpd_uri_t nvs_wifi_connect_ws = {
+    .uri = CONFIG_DEFAULT_NVS_WIFI_CONNECT_WS_URI,
     .method = HTTP_GET,
     .handler = ws_handler,
     .user_ctx = NULL,
@@ -199,7 +199,7 @@ static httpd_handle_t start_webserver(void)
     {
         // Registering the ws handler
         ESP_LOGI(TAG, "Registering URI handlers");
-        if (prv_register_uri_handler(server) != ESP_OK)
+        if (nvs_wifi_connect_register_uri_handler(server) != ESP_OK)
             {goto _ret;}
         if(srv_register_uri_handler)
         {
@@ -260,7 +260,7 @@ static void full_stop_httpd_server(void *arg, esp_event_base_t event_base,
             ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler));
             ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_AP_STACONNECTED, &connect_handler));
             ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &disconnect_handler));
-            ESP_ERROR_CHECK(esp_event_handler_unregister(PRV_STOP_HTTPD, PRV_STOP_HTTPD_EVENT, &full_stop_httpd_server));
+            ESP_ERROR_CHECK(esp_event_handler_unregister(NVS_WIFI_CONNECT_STOP_HTTPD, NVS_WIFI_CONNECT_STOP_HTTPD_EVENT, &full_stop_httpd_server));
             ESP_LOGI(TAG, "Unregister handlers OK");
         }
         else
@@ -269,19 +269,19 @@ static void full_stop_httpd_server(void *arg, esp_event_base_t event_base,
         }
     }
 }
-esp_err_t prv_register_uri_handler(httpd_handle_t server)
+esp_err_t nvs_wifi_connect_register_uri_handler(httpd_handle_t server)
 {
     esp_err_t ret = ESP_OK;
-    ret = httpd_register_uri_handler(server, &gh);
+    ret = httpd_register_uri_handler(server, &nvs_wifi_connect_gh);
     if (ret)
         goto _ret;
-    ret = httpd_register_uri_handler(server, &ws);
+    ret = httpd_register_uri_handler(server, &nvs_vifi_connect_ws);
     if (ret)
         goto _ret;
 _ret:
     return ret;
 }
-httpd_handle_t prv_start_http_server(int restart, prv_wifi_connect_register_uri_handler register_uri_handler)
+httpd_handle_t nvs_wifi_connect_start_http_server(int restart, nvs_wifi_connect_register_uri_handler register_uri_handler)
 {
     static httpd_handle_t server = NULL;
     srv_restart = restart;
@@ -293,7 +293,7 @@ httpd_handle_t prv_start_http_server(int restart, prv_wifi_connect_register_uri_
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STACONNECTED, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &disconnect_handler, &server));
 
-    ESP_ERROR_CHECK(esp_event_handler_register(PRV_STOP_HTTPD, PRV_STOP_HTTPD_EVENT, &full_stop_httpd_server, &server));
+    ESP_ERROR_CHECK(esp_event_handler_register(NVS_WIFI_CONNECT_STOP_HTTPD, NVS_WIFI_CONNECT_STOP_HTTPD_EVENT, &full_stop_httpd_server, &server));
 
     server = start_webserver();
     return server;

@@ -1,12 +1,12 @@
-menu "NVS WIFI Connect"
+menu "nvs wifi connect"
 
-    config DEFAULT_URI
+    config DEFAULT_NVS_WIFI_CONNECT_URI
         string "Connect page URI"
         default "/wifi"
         help
             WEB page URI to set ssid/pass.
 
-    config DEFAULT_WS_URI
+    config DEFAULT_NVS_WIFI_CONNECT_WS_URI
         string "Connect ws URI"
         default "/wifi/ws"
         help
