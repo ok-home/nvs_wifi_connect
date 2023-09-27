@@ -64,9 +64,9 @@
 </head>
 
 <body>
-    <div class="hdr">Example Websocket Echo Server</div>
+    <div class="hdr">Example Websocket Echo Server </div>
     <div class="column">
-        <button class="btn" id="goHome" onclick="window.location.href = '/wifi'" >Set WiFi SSID/Password</button>
+        <button class="btn" id="goWifi" onclick="window.location.href = '/wifi'" >Set WiFi SSID/Password -> /wifi</button>
     </div>
 
         <div class="cl1">
@@ -82,11 +82,11 @@
     <script>
         let exSend = document.getElementById("exampleSend");
         exSend.addEventListener("input", function (e) {
-            console.log(exSend.id + " " + exSend.value  );
+            //console.log(exSend.id + " " + exSend.value  );
             socket.send(JSON.stringify({ name: exSend.id, msg: exSend.value }));
         });
         function receiveWsData(data) {
-            console.log(data);
+            //console.log(data);
             try {
                 let obj = JSON.parse(data);
                 let exEcho = document.getElementById("exampleEcho");
