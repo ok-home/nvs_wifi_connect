@@ -27,4 +27,4 @@
     - esp_err_t nvs_wifi_connect_init_sta(char *sta_ssid, char *sta_pass); - подключается к существующей точке доступа с параметрами (sta_ssid/sta_pass) независимо от данных NVS. Возвращает ошибку при невозможности подключения.
  - Пример  -> example_nvs_wifi_connect.c
  - Параметры menuconfig
-   - CONFIG_HTTPD_WS_SUPPORT=y
+    - CONFIG_HTTPD_WS_SUPPORT=y
