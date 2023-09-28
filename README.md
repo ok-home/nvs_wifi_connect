@@ -26,3 +26,6 @@ If the STA is unable to connect to the selected access point after several attem
      - void nvs_wifi_connect_init_softap(char *ap_ssid, char *ap_pass); - creates SoftAP with parameters (ap_ssid/ap_pass) regardless of NVS data
      - esp_err_t nvs_wifi_connect_init_sta(char *sta_ssid, char *sta_pass); - connects to an existing access point with parameters (sta_ssid/sta_pass) regardless of NVS data. Returns an error if connection is not possible.
   - Example -> example_nvs_wifi_connect.c
+  - menuconfig options
+   - CONFIG_HTTPD_WS_SUPPORT=y
+  

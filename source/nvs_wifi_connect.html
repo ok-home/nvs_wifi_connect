@@ -183,9 +183,11 @@
         };
         socket.onclose = function (event) {
             console.log("close");
+            setTimeout(() => document.location.reload(), 2000);
         };
         socket.onerror = function () {
             console.log("error");
+            setTimeout(() => document.location.reload(), 2000);
         };
         socket.onmessage = function (event) {
             receiveWsData(event.data);
