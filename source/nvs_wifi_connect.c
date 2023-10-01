@@ -75,11 +75,12 @@ static void init_softap(char *ap_ssid, char *ap_pass)
             .authmode = WIFI_AUTH_WPA_WPA2_PSK
         },
     };
-    strncpy((char *)wifi_config.ap.ssid,ap_ssid,sizeof(wifi_config.ap.ssid));
-    strncpy((char *)wifi_config.ap.password,ap_pass,sizeof(wifi_config.ap.password));
+    strcpy((char *)wifi_config.ap.ssid,ap_ssid);
+    strcpy((char *)wifi_config.ap.password,ap_pass);
 
-    if (strlen((char*)wifi_config.ap.password) == 0) {
+    if (strlen((char*)wifi_config.ap.password) < 8) {
         wifi_config.ap.authmode = WIFI_AUTH_OPEN;
+        wifi_config.ap.password[0] = 0; 
     }
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
@@ -125,8 +126,8 @@ static esp_err_t init_sta(char *sta_ssid, char *sta_pass )
             },
         },
     };
-    strncpy((char *)wifi_config.sta.ssid,sta_ssid,sizeof(wifi_config.sta.ssid));
-    strncpy((char *)wifi_config.sta.password,sta_pass,sizeof(wifi_config.sta.password));
+    strcpy((char *)wifi_config.sta.ssid,sta_ssid);
+    strcpy((char *)wifi_config.sta.password,sta_pass);
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
