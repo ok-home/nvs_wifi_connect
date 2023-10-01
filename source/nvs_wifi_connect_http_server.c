@@ -98,7 +98,7 @@ static void set_nvs_data(char *jsonstr, httpd_req_t *req)
     }
     else
     {
-        if (strncmp(key, NVS_COMPARE_KEY_PARAM, sizeof(NVS_COMPARE_KEY_PARAM)) == 0  ) // key/value -> wifi data
+        if (strncmp(key, NVS_COMPARE_KEY_PARAM, sizeof(NVS_COMPARE_KEY_PARAM)-1) == 0  ) // key/value -> wifi data
         {
             if (nvs_set_str(nvs_handle, key, value)) // write key/value to nvs
             {
