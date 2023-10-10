@@ -1,4 +1,4 @@
-menu "nvs wifi connect"
+menu "Nvs WiFi Connect"
 
     config DEFAULT_NVS_WIFI_CONNECT_URI
         string "Connect page URI"
