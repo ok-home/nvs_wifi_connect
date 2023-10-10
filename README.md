@@ -4,7 +4,7 @@
 | ESP32 ESP32S3 ESP32C3 |
 | ----------------- |
 
-# ESP32 WiFi Connect to an access point or create an access point using SSID/Pass saved in NVS
+# ESP32 WiFi Connect to an access point or create an access point using SSID/Pass saved in NVS. Designed to work in a local network.
 When you turn it on for the first time (there is no data in NVS), an access point is created with the parameters specified in menuconfig.
 You can connect a web server with a setup page in which you select the WiFi STA/SoftAP operating mode and WiFi connection passwords.
 Connection parameters are saved in NVS. After saving the settings, the web server can be left running for other applications, stopped, or restarted the ESP32. After a reboot, WiFi will connect with the parameters saved in NVS.
