@@ -26,6 +26,11 @@ esp_err_t nvs_wifi_connect(void);
 *   @brief  create softAP with ap_ssid/ap_pass ip=192.168.4.1
 *   @param  char *ap_ssid -> softAP ssid
 *   @param  char *ap_pass -> softAP pass -> NULL -> authmode = WIFI_AUTH_OPEN
+*   @return
+*           ESP_OK              -> connect to wifi OK
+*           ESP_ERR_INVALID_ARG -> invalid ssid/pass. Create default AP
+*           ESP_FAIL            -> can`t connect to wifi or create AP
+
 */
 void nvs_wifi_connect_init_softap(char *ap_ssid, char *ap_pass);
 /*
@@ -33,8 +38,8 @@ void nvs_wifi_connect_init_softap(char *ap_ssid, char *ap_pass);
 *   @param  char *sta_ssid -> WIFI ssid
 *   @param  char *sta_pass -> WIFI pass
 *   @return
-*           ESP_OK      -> connect to wifi OK
-*           ESP_FAIL    -> can`t connect to wifi with ssid/pass
+*           ESP_OK              -> connect to wifi OK
+*           ESP_FAIL            -> can`t connect to wifi with ssid/pass
 */
 esp_err_t nvs_wifi_connect_init_sta(char *sta_ssid, char *sta_pass);
 /*
