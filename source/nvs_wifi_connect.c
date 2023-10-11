@@ -192,6 +192,7 @@ static esp_err_t nvs_get_key_value_str(char *key, char *value)
 _ret:
     return ret;
 }
+#ifdef TST_CHANGE
 esp_err_t nvs_wifi_connect(void)
 {
     int nvs_init = 0;
@@ -244,6 +245,55 @@ esp_err_t nvs_wifi_connect(void)
     }
     return err;
 }
+#endif
+
+esp_err_t nvs_wifi_connect(void)
+{
+    int nvs_init = 0;
+    char  nvs_mode[32]={0};
+    char  nvs_ssid[32]={0};
+    char  nvs_password[64]={0};
+
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        nvs_init = 1;
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(err);
+
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    err = ESP_OK;
+
+    if(strncmp(NVS_WIFI_CONNECT_MODE_STA,nvs_mode,sizeof(NVS_WIFI_CONNECT_MODE_STA)) == 0) // sta
+        {
+            if((nvs_get_key_value_str(NVS_STA_ESP_WIFI_SSID_KEY, nvs_ssid) || nvs_get_key_value_str(NVS_STA_ESP_WIFI_PASS_KEY, nvs_password)) == ESP_OK)
+            {
+            if( init_sta(nvs_ssid,nvs_password) == ESP_OK ); // ssid & pass OK
+                {
+                    return ESP_OK;
+                }
+            }
+            ESP_LOGE(TAG,"STA ERR ssid=%s pass=%s",nvs_ssid,nvs_password);
+            err = ESP_INVALID_ARGS;
+        }
+    if(nvs_get_key_value_str(NVS_AP_ESP_WIFI_SSID_KEY , nvs_ssid) || nvs_get_key_value_str(NVS_AP_ESP_WIFI_PASS_KEY , nvs_password) == ESP_OK);
+        {
+            init_softap(nvs_ssid,nvs_password); // ssid & pass OK
+            return err;
+        }
+    ESP_LOGE(TAG,"AP ERR ssid=%s pass=%s Start default AP",nvs_ssid,nvs_password);
+    init_softap(CONFIG_DEFAULT_AP_ESP_WIFI_SSID,CONFIG_DEFAULT_AP_ESP_WIFI_PASS);
+
+    return ESP_INVALID_ARGS;
+}
+
+
+
+
 esp_err_t nvs_wifi_connect_init_sta(char *sta_ssid, char *sta_pass )
 {
     esp_err_t err = nvs_flash_init();
