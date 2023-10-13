@@ -66,27 +66,27 @@ static void send_nvs_data(httpd_req_t *req)
     nvs_handle_t nvs_handle;
     size_t required_size = 0;
 
-    nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle);
+    if(nvs_open(NVS_STORAGE_NAME, NVS_READWRITE, &nvs_handle)) {return;} // err open nvs
     required_size = sizeof(nvs_data);
-    nvs_get_str(nvs_handle, NVS_STA_AP_DEFAULT_MODE_KEY, nvs_data, &required_size);
+    if(nvs_get_str(nvs_handle, NVS_STA_AP_DEFAULT_MODE_KEY, nvs_data, &required_size)==ESP_OK){
     snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_STA_AP_DEFAULT_MODE_KEY, nvs_data);
-    send_json_string(buf, req);
+    send_json_string(buf, req);}
     required_size = sizeof(nvs_data);
-    nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_SSID_KEY, nvs_data, &required_size);
+    if(nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_SSID_KEY, nvs_data, &required_size)==ESP_OK){
     snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_AP_ESP_WIFI_SSID_KEY, nvs_data);
-    send_json_string(buf, req);
+    send_json_string(buf, req);}
     required_size = sizeof(nvs_data);
-    nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_PASS_KEY, nvs_data, &required_size);
+    if(nvs_get_str(nvs_handle, NVS_AP_ESP_WIFI_PASS_KEY, nvs_data, &required_size)==ESP_OK){
     snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_AP_ESP_WIFI_PASS_KEY, nvs_data);
-    send_json_string(buf, req);
+    send_json_string(buf, req);}
     required_size = sizeof(nvs_data);
-    nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_SSID_KEY, nvs_data, &required_size);
+    if(nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_SSID_KEY, nvs_data, &required_size)==ESP_OK){
     snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_STA_ESP_WIFI_SSID_KEY, nvs_data);
-    send_json_string(buf, req);
+    send_json_string(buf, req);}
     required_size = sizeof(nvs_data);
-    nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_PASS_KEY, nvs_data, &required_size);
+    if(nvs_get_str(nvs_handle, NVS_STA_ESP_WIFI_PASS_KEY, nvs_data, &required_size)==ESP_OK){
     snprintf(buf, sizeof(buf), "{\"name\":\"%s\",\"msg\":\"%s\"}", NVS_STA_ESP_WIFI_PASS_KEY, nvs_data);
-    send_json_string(buf, req);
+    send_json_string(buf, req);}
     nvs_close(nvs_handle);
 }
 // write wifi data from ws to nvs
