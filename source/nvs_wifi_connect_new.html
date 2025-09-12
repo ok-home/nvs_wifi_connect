@@ -4,8 +4,26 @@
     <title>Настройка WiFi подключения NVS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Встроенные иконки Font Awesome */
+        .fa {
+            display: inline-block;
+            font-style: normal;
+            font-variant: normal;
+            text-rendering: auto;
+            line-height: 1;
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+        }
+        
+        .fa-wifi:before { content: "\f1eb"; }
+        .fa-network-wired:before { content: "\f6ff"; }
+        .fa-lock:before { content: "\f023"; }
+        .fa-save:before { content: "\f0c7"; }
+        .fa-power-off:before { content: "\f011"; }
+        .fa-home:before { content: "\f015"; }
+        
+        /* Основные стили */
         :root {
             --primary: #4361ee;
             --primary-dark: #3a56d4;
@@ -130,6 +148,7 @@
 
         .btn-primary:hover {
             background-color: var(--primary-dark);
+            transform: translateY(-2px);
         }
 
         .btn-success {
@@ -139,6 +158,7 @@
 
         .btn-success:hover {
             background-color: #218838;
+            transform: translateY(-2px);
         }
 
         .btn-secondary {
@@ -148,6 +168,7 @@
 
         .btn-secondary:hover {
             background-color: #5a6268;
+            transform: translateY(-2px);
         }
 
         .mode-section {
@@ -223,7 +244,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-wifi"></i> Настройка WiFi подключения NVS</h1>
+            <h1><i class="fa fa-wifi"></i> Настройка WiFi подключения NVS</h1>
             <p>Настройте параметры беспроводного подключения вашего устройства</p>
         </div>
 
@@ -234,7 +255,7 @@
 
         <div class="card">
             <div class="form-group">
-                <label for="nvsApStaMode"><i class="fas fa-network-wired"></i> Режим подключения</label>
+                <label for="nvsApStaMode"><i class="fa fa-network-wired"></i> Режим подключения</label>
                 <select id="nvsApStaMode">
                     <option value="modeSta" selected>Подключиться к WiFi сети</option>
                     <option value="modeAp">Создать точку доступа (AP)</option>
@@ -243,24 +264,24 @@
 
             <div id="modeSta" class="mode-section">
                 <div class="form-group">
-                    <label for="nvsStaSsid"><i class="fas fa-network-wired"></i> Имя сети (SSID)</label>
+                    <label for="nvsStaSsid"><i class="fa fa-network-wired"></i> Имя сети (SSID)</label>
                     <input type="text" id="nvsStaSsid" placeholder="Введите имя WiFi сети">
                 </div>
 
                 <div class="form-group">
-                    <label for="nvsStaPass"><i class="fas fa-lock"></i> Пароль</label>
+                    <label for="nvsStaPass"><i class="fa fa-lock"></i> Пароль</label>
                     <input type="text" id="nvsStaPass" placeholder="Введите пароль">
                 </div>
             </div>
             
             <div id="modeAp" class="mode-section" style="display:none">
                 <div class="form-group">
-                    <label for="nvsApSsid"><i class="fas fa-wifi"></i> Имя точки доступа</label>
+                    <label for="nvsApSsid"><i class="fa fa-wifi"></i> Имя точки доступа</label>
                     <input type="text" id="nvsApSsid" placeholder="Введите имя точки доступа">
                 </div>
 
                 <div class="form-group">
-                    <label for="nvsApPass"><i class="fas fa-lock"></i> Пароль точки доступа</label>
+                    <label for="nvsApPass"><i class="fa fa-lock"></i> Пароль точки доступа</label>
                     <input type="text" id="nvsApPass" placeholder="Введите пароль (минимум 8 символов)">
                 </div>
             </div>
@@ -269,15 +290,15 @@
         <div class="card">
             <div class="btn-container">
                 <button class="btn btn-success" id="Wifi_Upload">
-                    <i class="fas fa-save"></i> Сохранить настройки
+                    <i class="fa fa-save"></i> Сохранить настройки
                 </button>
                 <button class="btn btn-primary" id="Wifi_Restart">
-                    <i class="fas fa-power-off"></i> Сохранить и перезагрузить
+                    <i class="fa fa-power-off"></i> Сохранить и перезагрузить
                 </button>
             </div>
             
             <button class="btn btn-secondary" id="goHome">
-                <i class="fas fa-home"></i> Вернуться на главную
+                <i class="fa fa-home"></i> Вернуться на главную
             </button>
         </div>
     </div>
