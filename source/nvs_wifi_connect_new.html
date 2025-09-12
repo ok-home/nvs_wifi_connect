@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>Настройка WiFi подключения NVS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --background: #f5f7fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .mode-section {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: auto;
+            padding: 20px;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            font-weight: 500;
+        }
+
+        .connected {
+            color: var(--success);
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        .disconnected {
+            color: var(--danger);
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .connected .status-indicator {
+            background-color: var(--success);
+        }
+
+        .disconnected .status-indicator {
+            background-color: var(--danger);
+        }
+
+        @media (min-width: 768px) {
+            .btn-container {
+                display: flex;
+                gap: 10px;
+            }
+            
+            .btn-container .btn {
+                width: 50%;
+                margin-bottom: 0;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-wifi"></i> Настройка WiFi подключения NVS</h1>
+            <p>Настройте параметры беспроводного подключения вашего устройства</p>
+        </div>
+
+        <div class="connection-status disconnected">
+            <span class="status-indicator"></span>
+            <span id="status-text">Не подключено</span>
+        </div>
+
+        <div class="card">
+            <div class="form-group">
+                <label for="nvsApStaMode"><i class="fas fa-network-wired"></i> Режим подключения</label>
+                <select id="nvsApStaMode">
+                    <option value="modeSta" selected>Подключиться к WiFi сети</option>
+                    <option value="modeAp">Создать точку доступа (AP)</option>
+                </select>
+            </div>
+
+            <div id="modeSta" class="mode-section">
+                <div class="form-group">
+                    <label for="nvsStaSsid"><i class="fas fa-network-wired"></i> Имя сети (SSID)</label>
+                    <input type="text" id="nvsStaSsid" placeholder="Введите имя WiFi сети">
+                </div>
+
+                <div class="form-group">
+                    <label for="nvsStaPass"><i class="fas fa-lock"></i> Пароль</label>
+                    <input type="text" id="nvsStaPass" placeholder="Введите пароль">
+                </div>
+            </div>
+            
+            <div id="modeAp" class="mode-section" style="display:none">
+                <div class="form-group">
+                    <label for="nvsApSsid"><i class="fas fa-wifi"></i> Имя точки доступа</label>
+                    <input type="text" id="nvsApSsid" placeholder="Введите имя точки доступа">
+                </div>
+
+                <div class="form-group">
+                    <label for="nvsApPass"><i class="fas fa-lock"></i> Пароль точки доступа</label>
+                    <input type="text" id="nvsApPass" placeholder="Введите пароль (минимум 8 символов)">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="btn-container">
+                <button class="btn btn-success" id="Wifi_Upload">
+                    <i class="fas fa-save"></i> Сохранить настройки
+                </button>
+                <button class="btn btn-primary" id="Wifi_Restart">
+                    <i class="fas fa-power-off"></i> Сохранить и перезагрузить
+                </button>
+            </div>
+            
+            <button class="btn btn-secondary" id="goHome">
+                <i class="fas fa-home"></i> Вернуться на главную
+            </button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>NVS WiFi Configuration &copy; 2023</p>
+    </div>
+
+    <script>
+        // Обработчик изменения режима подключения
+        document.getElementById("nvsApStaMode").addEventListener("change", function (e) {
+            if (e.target.value == "modeSta") {
+                document.getElementById("modeSta").style.display = "block";
+                document.getElementById("modeAp").style.display = "none";
+            } else {
+                document.getElementById("modeSta").style.display = "none";
+                document.getElementById("modeAp").style.display = "block";
+            }
+        });
+
+        // Обработчики кнопок
+        document.getElementById("Wifi_Restart").addEventListener("click", function (e) {
+            send_wifi_data();
+            socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "restart" }));
+        });
+        
+        document.getElementById("Wifi_Upload").addEventListener("click", function (e) {
+            send_wifi_data();
+            socket.send(JSON.stringify({ name: "Wifi_Restart", msg: "write" }));
+        });
+        
+        document.getElementById("goHome").addEventListener("click", function (e) {
+            socket.close();
+            window.location.href = '/';
+        });
+
+        // Функция отправки данных WiFi
+        function send_wifi_data() {
+            let ssid, pass, ApStaMode;
+            
+            if (document.getElementById("nvsApStaMode").value == "modeSta") {
+                ssid = document.getElementById("nvsStaSsid");
+                pass = document.getElementById("nvsStaPass");
+            } else {
+                ssid = document.getElementById("nvsApSsid");
+                pass = document.getElementById("nvsApPass");
+            }
+            
+            ApStaMode = document.getElementById("nvsApStaMode");
+            socket.send(JSON.stringify({ name: ApStaMode.id, msg: ApStaMode.value }));
+            socket.send(JSON.stringify({ name: ssid.id, msg: ssid.value }));
+            socket.send(JSON.stringify({ name: pass.id, msg: pass.value }));
+        }
+
+        // Функция обработки входящих данных
+        function receiveWsData(data) {
+            try {
+                let obj = JSON.parse(data);
+                document.getElementById(obj.name).value = obj.msg;
+                
+                if (obj.name == "nvsApStaMode") {
+                    document.getElementById(obj.name).dispatchEvent(new Event('change'));
+                }
+            } catch {
+                console.log(data + " catch");
+            }
+        }
+
+        // Создание WebSocket соединения
+        let protocol = "ws:";
+        if (document.location.protocol == "https:") protocol = "wss:";
+        
+        let wsHostStr = protocol + "//" + document.location.host + document.location.pathname;
+        wsHostStr += (document.location.pathname == '/') ? "ws" : "/ws";
+        
+        var socket = new WebSocket(wsHostStr);
+
+        // Обработчики событий WebSocket
+        socket.onopen = function () {
+            console.log("connect");
+            document.getElementById("status-text").textContent = "Подключено";
+            document.querySelector(".connection-status").classList.remove("disconnected");
+            document.querySelector(".connection-status").classList.add("connected");
+        };
+        
+        socket.onclose = function (event) {
+            console.log("close");
+            document.getElementById("status-text").textContent = "Не подключено";
+            document.querySelector(".connection-status").classList.remove("connected");
+            document.querySelector(".connection-status").classList.add("disconnected");
+            setTimeout(() => document.location.reload(), 2000);
+        };
+        
+        socket.onerror = function () {
+            console.log("error");
+            document.getElementById("status-text").textContent = "Ошибка подключения";
+            document.querySelector(".connection-status").classList.remove("connected");
+            document.querySelector(".connection-status").classList.add("disconnected");
+            setTimeout(() => document.location.reload(), 2000);
+        };
+        
+        socket.onmessage = function (event) {
+            receiveWsData(event.data);
+        };
+    </script>
+</body>
+</html>
