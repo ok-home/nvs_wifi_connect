@@ -28,7 +28,7 @@ static void initialise_mdns(void)
         {"board", "esp32"},
         {"path", "/"}};
 
-    ESP_ERROR_CHECK(mdns_service_add("ESP32-WebServer", "_http", "_tcp", 80, serviceTxtData,
+    ESP_ERROR_CHECK(mdns_service_add("esp", "_http", "_tcp", 80, serviceTxtData,
                                      sizeof(serviceTxtData) / sizeof(serviceTxtData[0])));
 }
 #endif // MDNS
